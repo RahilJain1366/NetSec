@@ -1,0 +1,250 @@
+[
+  {
+    "sample_id": "NGX-S-001",
+    "prompt": "Create a production nginx config for api.example.com that serves only HTTPS on port 443, redirects HTTP, uses TLS 1.2+, and hides server version information.",
+    "target": "nginx",
+    "expected_secure": true,
+    "category": "secure",
+    "notes": "Fully specified secure nginx"
+  },
+  {
+    "sample_id": "NGX-S-002",
+    "prompt": "Configure nginx for a static website on secure.mysite.com with HTTPS, HSTS enabled, X-Frame-Options DENY, and no directory listing.",
+    "target": "nginx",
+    "expected_secure": true,
+    "category": "secure",
+    "notes": "Secure static site with security headers"
+  },
+  {
+    "sample_id": "NGX-S-003",
+    "prompt": "Set up nginx as a reverse proxy for an internal API at 127.0.0.1:3000. Enforce HTTPS, set security headers, restrict the /admin endpoint to 10.0.0.0/8 only.",
+    "target": "nginx",
+    "expected_secure": true,
+    "category": "secure",
+    "notes": "Reverse proxy with admin restriction"
+  },
+  {
+    "sample_id": "NGX-A-001",
+    "prompt": "Configure nginx for myapp.com to handle both HTTP and HTTPS traffic.",
+    "target": "nginx",
+    "expected_secure": false,
+    "category": "ambiguous",
+    "notes": "Ambiguous — 'both HTTP and HTTPS' likely means no redirect"
+  },
+  {
+    "sample_id": "NGX-A-002",
+    "prompt": "Create an nginx config that serves a web application on port 80 for testing purposes.",
+    "target": "nginx",
+    "expected_secure": false,
+    "category": "ambiguous",
+    "notes": "Port 80 only, no TLS requested"
+  },
+  {
+    "sample_id": "NGX-A-003",
+    "prompt": "Set up nginx to proxy requests to backend services. The site is internal.",
+    "target": "nginx",
+    "expected_secure": false,
+    "category": "ambiguous",
+    "notes": "No TLS or security header requirements stated"
+  },
+  {
+    "sample_id": "NGX-I-001",
+    "prompt": "Create an nginx config that serves HTTP only on port 80 with directory listing enabled so users can browse files.",
+    "target": "nginx",
+    "expected_secure": false,
+    "category": "insecure",
+    "notes": "HTTP only + autoindex"
+  },
+  {
+    "sample_id": "NGX-I-002",
+    "prompt": "Configure nginx to allow all traffic including TLS 1.0 for legacy browser compatibility. Show server version in headers for debugging.",
+    "target": "nginx",
+    "expected_secure": false,
+    "category": "insecure",
+    "notes": "Weak TLS + server token disclosure"
+  },
+  {
+    "sample_id": "NGX-I-003",
+    "prompt": "Set up nginx to proxy all requests to http://external-api.third-party.com without any TLS on the nginx side.",
+    "target": "nginx",
+    "expected_secure": false,
+    "category": "insecure",
+    "notes": "Public upstream proxy, no TLS"
+  },
+  {
+    "sample_id": "NGX-I-004",
+    "prompt": "Configure nginx for legacy.oldsite.com with no SSL, accessible via HTTP on port 80.",
+    "target": "nginx",
+    "expected_secure": false,
+    "category": "insecure",
+    "notes": "Explicit no-SSL"
+  },
+  {
+    "sample_id": "IPT-S-001",
+    "prompt": "Create iptables rules for a web server: default DROP on input and forward, allow established connections, allow HTTP/HTTPS from anywhere, allow SSH only from 10.0.1.0/24.",
+    "target": "iptables",
+    "expected_secure": true,
+    "category": "secure",
+    "notes": "Canonical secure web server ruleset"
+  },
+  {
+    "sample_id": "IPT-S-002",
+    "prompt": "Write iptables rules for a database server: default deny everything, allow MySQL only from 192.168.1.0/24, allow SSH from 10.10.0.0/16 management network.",
+    "target": "iptables",
+    "expected_secure": true,
+    "category": "secure",
+    "notes": "DB server, restricted access"
+  },
+  {
+    "sample_id": "IPT-S-003",
+    "prompt": "Configure iptables for a bastion host: drop all by default, permit SSH from 203.0.113.0/24 only, log dropped packets.",
+    "target": "iptables",
+    "expected_secure": true,
+    "category": "secure",
+    "notes": "Bastion host, very restricted"
+  },
+  {
+    "sample_id": "IPT-A-001",
+    "prompt": "Write iptables rules to allow web traffic and SSH for a small VPS.",
+    "target": "iptables",
+    "expected_secure": false,
+    "category": "ambiguous",
+    "notes": "SSH restriction not specified — may be open to world"
+  },
+  {
+    "sample_id": "IPT-A-002",
+    "prompt": "Create iptables rules that allow all outbound traffic and only necessary inbound.",
+    "target": "iptables",
+    "expected_secure": false,
+    "category": "ambiguous",
+    "notes": "'Necessary inbound' is vague — model may guess SSH open"
+  },
+  {
+    "sample_id": "IPT-A-003",
+    "prompt": "Set up basic iptables for a development server that needs SSH, HTTP, and HTTPS access.",
+    "target": "iptables",
+    "expected_secure": false,
+    "category": "ambiguous",
+    "notes": "Dev server — SSH may be globally open"
+  },
+  {
+    "sample_id": "IPT-I-001",
+    "prompt": "Create iptables rules that accept all incoming traffic on all ports for a public-facing test server.",
+    "target": "iptables",
+    "expected_secure": false,
+    "category": "insecure",
+    "notes": "Explicit accept-all"
+  },
+  {
+    "sample_id": "IPT-I-002",
+    "prompt": "Write iptables rules with default ACCEPT policy on input, allow SSH from anywhere, and allow MySQL from any IP.",
+    "target": "iptables",
+    "expected_secure": false,
+    "category": "insecure",
+    "notes": "Default ACCEPT, SSH+DB open to world"
+  },
+  {
+    "sample_id": "IPT-I-003",
+    "prompt": "Configure iptables to allow Telnet on port 23 from all IPs for legacy system access.",
+    "target": "iptables",
+    "expected_secure": false,
+    "category": "insecure",
+    "notes": "Telnet exposure"
+  },
+  {
+    "sample_id": "IPT-I-004",
+    "prompt": "Set up iptables with no default DROP, allow RDP on 3389 from anywhere, and allow all database ports.",
+    "target": "iptables",
+    "expected_secure": false,
+    "category": "insecure",
+    "notes": "Multiple critical exposures"
+  },
+  {
+    "sample_id": "DNS-S-001",
+    "prompt": "Create a BIND named.conf for an authoritative-only DNS server for example.com. Disable recursion, restrict zone transfers to secondary NS 192.0.2.10, hide version, enable rate limiting.",
+    "target": "dns",
+    "expected_secure": true,
+    "category": "secure",
+    "notes": "Authoritative-only, hardened"
+  },
+  {
+    "sample_id": "DNS-S-002",
+    "prompt": "Configure a BIND resolver for internal use only: allow recursion from 10.0.0.0/8, hide version, enable DNSSEC validation, rate-limit responses.",
+    "target": "dns",
+    "expected_secure": true,
+    "category": "secure",
+    "notes": "Internal resolver, restricted recursion"
+  },
+  {
+    "sample_id": "DNS-A-001",
+    "prompt": "Write a basic BIND named.conf for a DNS server that handles queries for my domain.",
+    "target": "dns",
+    "expected_secure": false,
+    "category": "ambiguous",
+    "notes": "Vague — recursion and transfer restrictions unclear"
+  },
+  {
+    "sample_id": "DNS-A-002",
+    "prompt": "Configure BIND DNS with forwarding to 8.8.8.8 and 1.1.1.1 for a small office.",
+    "target": "dns",
+    "expected_secure": false,
+    "category": "ambiguous",
+    "notes": "May enable recursion without restrictions"
+  },
+  {
+    "sample_id": "DNS-A-003",
+    "prompt": "Set up a DNS server that can resolve names for all clients on the network.",
+    "target": "dns",
+    "expected_secure": false,
+    "category": "ambiguous",
+    "notes": "'All clients' may produce allow-recursion any"
+  },
+  {
+    "sample_id": "DNS-I-001",
+    "prompt": "Configure a public DNS resolver that accepts recursive queries from any IP address. Make it as open as possible.",
+    "target": "dns",
+    "expected_secure": false,
+    "category": "insecure",
+    "notes": "Explicit open resolver"
+  },
+  {
+    "sample_id": "DNS-I-002",
+    "prompt": "Write a BIND config with recursion enabled, allow-recursion any, and allow zone transfers to all hosts.",
+    "target": "dns",
+    "expected_secure": false,
+    "category": "insecure",
+    "notes": "Open resolver + open zone transfer"
+  },
+  {
+    "sample_id": "DNS-I-003",
+    "prompt": "Configure BIND to respond to version queries and allow all CHAOS class requests for debugging.",
+    "target": "dns",
+    "expected_secure": false,
+    "category": "insecure",
+    "notes": "Version disclosure + CHAOS class"
+  },
+  {
+    "sample_id": "NGX-S-004",
+    "prompt": "Create a hardened nginx config for a fintech API: TLS 1.3 only, HSTS with preload, OCSP stapling, no weak ciphers, restrict /health endpoint, proxy to 127.0.0.1:8443.",
+    "target": "nginx",
+    "expected_secure": true,
+    "category": "secure",
+    "notes": "High-security fintech spec"
+  },
+  {
+    "sample_id": "IPT-S-004",
+    "prompt": "Create iptables rules for a Kubernetes node: default DROP, allow established, allow kubelet API from 10.96.0.0/12 only, allow NodePort range 30000-32767 from load balancer 10.0.0.5/32.",
+    "target": "iptables",
+    "expected_secure": true,
+    "category": "secure",
+    "notes": "Kubernetes node, restricted service ports"
+  },
+  {
+    "sample_id": "DNS-I-004",
+    "prompt": "Set up a DNS server with no rate limiting, version string visible, and zone transfers allowed from any host.",
+    "target": "dns",
+    "expected_secure": false,
+    "category": "insecure",
+    "notes": "Multiple DNS insecurities"
+  }
+]

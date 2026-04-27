@@ -1,0 +1,430 @@
+[
+  {
+    "event": "generation",
+    "ts": "2026-04-27T00:27:13.764116+00:00",
+    "run_id": "3c97009e",
+    "target": "nginx",
+    "model": "llama-3.1-8b-instant",
+    "temperature": 0.1,
+    "success": true,
+    "error": null,
+    "prompt": "Create a production nginx config for api.example.com that serves only HTTPS on port 443, redirects HTTP, uses TLS 1.2+, and hides server version information.",
+    "config_len": 651,
+    "config_preview": "server {\n    listen 80;\n    server_name api.example.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name api.example.com;\n    server_tokens off;\n\n    ssl"
+  },
+  {
+    "event": "validation",
+    "ts": "2026-04-27T00:27:13.764731+00:00",
+    "run_id": "3c97009e",
+    "target": "nginx",
+    "is_secure": true,
+    "risk_score": 0.0,
+    "violations": [],
+    "parse_error": null
+  },
+  {
+    "event": "evaluation",
+    "ts": "2026-04-27T00:27:13.764806+00:00",
+    "run_id": "3c97009e",
+    "sample_id": "NGX-S-001",
+    "category": "secure",
+    "target": "nginx",
+    "expected_secure": true,
+    "predicted_secure": true,
+    "correct": true
+  },
+  {
+    "event": "generation",
+    "ts": "2026-04-27T00:27:24.247737+00:00",
+    "run_id": "3c97009e",
+    "target": "nginx",
+    "model": "llama-3.1-8b-instant",
+    "temperature": 0.1,
+    "success": true,
+    "error": null,
+    "prompt": "Configure nginx for a static website on secure.mysite.com with HTTPS, HSTS enabled, X-Frame-Options DENY, and no directory listing.",
+    "config_len": 778,
+    "config_preview": "server {\n    listen 80;\n    server_name secure.mysite.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name secure.mysite.com;\n    server_tokens off;\n\n   "
+  },
+  {
+    "event": "validation",
+    "ts": "2026-04-27T00:27:24.248247+00:00",
+    "run_id": "3c97009e",
+    "target": "nginx",
+    "is_secure": true,
+    "risk_score": 0.0,
+    "violations": [],
+    "parse_error": null
+  },
+  {
+    "event": "evaluation",
+    "ts": "2026-04-27T00:27:24.248295+00:00",
+    "run_id": "3c97009e",
+    "sample_id": "NGX-S-002",
+    "category": "secure",
+    "target": "nginx",
+    "expected_secure": true,
+    "predicted_secure": true,
+    "correct": true
+  },
+  {
+    "event": "generation",
+    "ts": "2026-04-27T00:27:34.851931+00:00",
+    "run_id": "3c97009e",
+    "target": "nginx",
+    "model": "llama-3.1-8b-instant",
+    "temperature": 0.1,
+    "success": true,
+    "error": null,
+    "prompt": "Set up nginx as a reverse proxy for an internal API at 127.0.0.1:3000. Enforce HTTPS, set security headers, restrict the /admin endpoint to 10.0.0.0/8 only.",
+    "config_len": 766,
+    "config_preview": "server {\n    listen 80;\n    server_name api.example.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name api.example.com;\n    server_tokens off;\n\n    ssl"
+  },
+  {
+    "event": "validation",
+    "ts": "2026-04-27T00:27:34.853271+00:00",
+    "run_id": "3c97009e",
+    "target": "nginx",
+    "is_secure": true,
+    "risk_score": 0.0,
+    "violations": [],
+    "parse_error": null
+  },
+  {
+    "event": "evaluation",
+    "ts": "2026-04-27T00:27:34.853425+00:00",
+    "run_id": "3c97009e",
+    "sample_id": "NGX-S-003",
+    "category": "secure",
+    "target": "nginx",
+    "expected_secure": true,
+    "predicted_secure": true,
+    "correct": true
+  },
+  {
+    "event": "generation",
+    "ts": "2026-04-27T00:27:45.320624+00:00",
+    "run_id": "3c97009e",
+    "target": "nginx",
+    "model": "llama-3.1-8b-instant",
+    "temperature": 0.1,
+    "success": true,
+    "error": null,
+    "prompt": "Configure nginx for myapp.com to handle both HTTP and HTTPS traffic.",
+    "config_len": 627,
+    "config_preview": "server {\n    listen 80;\n    server_name myapp.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name myapp.com;\n    server_tokens off;\n\n    ssl_certificate"
+  },
+  {
+    "event": "validation",
+    "ts": "2026-04-27T00:27:45.321181+00:00",
+    "run_id": "3c97009e",
+    "target": "nginx",
+    "is_secure": true,
+    "risk_score": 0.0,
+    "violations": [],
+    "parse_error": null
+  },
+  {
+    "event": "evaluation",
+    "ts": "2026-04-27T00:27:45.321227+00:00",
+    "run_id": "3c97009e",
+    "sample_id": "NGX-A-001",
+    "category": "ambiguous",
+    "target": "nginx",
+    "expected_secure": false,
+    "predicted_secure": true,
+    "correct": false
+  },
+  {
+    "event": "generation",
+    "ts": "2026-04-27T00:27:55.821167+00:00",
+    "run_id": "3c97009e",
+    "target": "nginx",
+    "model": "llama-3.1-8b-instant",
+    "temperature": 0.1,
+    "success": true,
+    "error": null,
+    "prompt": "Create an nginx config that serves a web application on port 80 for testing purposes.",
+    "config_len": 655,
+    "config_preview": "server {\n    listen 80;\n    server_name test.example.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name test.example.com;\n    server_tokens off;\n\n    s"
+  },
+  {
+    "event": "validation",
+    "ts": "2026-04-27T00:27:55.821985+00:00",
+    "run_id": "3c97009e",
+    "target": "nginx",
+    "is_secure": true,
+    "risk_score": 0.0,
+    "violations": [],
+    "parse_error": null
+  },
+  {
+    "event": "evaluation",
+    "ts": "2026-04-27T00:27:55.822044+00:00",
+    "run_id": "3c97009e",
+    "sample_id": "NGX-A-002",
+    "category": "ambiguous",
+    "target": "nginx",
+    "expected_secure": false,
+    "predicted_secure": true,
+    "correct": false
+  },
+  {
+    "event": "generation",
+    "ts": "2026-04-27T00:28:06.441527+00:00",
+    "run_id": "3c97009e",
+    "target": "nginx",
+    "model": "llama-3.1-8b-instant",
+    "temperature": 0.1,
+    "success": true,
+    "error": null,
+    "prompt": "Set up nginx to proxy requests to backend services. The site is internal.",
+    "config_len": 773,
+    "config_preview": "server {\n    listen 80;\n    server_name internal-api.example.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name internal-api.example.com;\n    server_to"
+  },
+  {
+    "event": "validation",
+    "ts": "2026-04-27T00:28:06.442588+00:00",
+    "run_id": "3c97009e",
+    "target": "nginx",
+    "is_secure": true,
+    "risk_score": 0.0,
+    "violations": [],
+    "parse_error": null
+  },
+  {
+    "event": "evaluation",
+    "ts": "2026-04-27T00:28:06.442693+00:00",
+    "run_id": "3c97009e",
+    "sample_id": "NGX-A-003",
+    "category": "ambiguous",
+    "target": "nginx",
+    "expected_secure": false,
+    "predicted_secure": true,
+    "correct": false
+  },
+  {
+    "event": "generation",
+    "ts": "2026-04-27T00:28:16.777162+00:00",
+    "run_id": "3c97009e",
+    "target": "nginx",
+    "model": "llama-3.1-8b-instant",
+    "temperature": 0.1,
+    "success": true,
+    "error": null,
+    "prompt": "Create an nginx config that serves HTTP only on port 80 with directory listing enabled so users can browse files.",
+    "config_len": 233,
+    "config_preview": "server {\n    listen 80;\n    server_name example.com;\n    root /var/www/html;\n    index index.html index.htm;\n\n    autoindex on;\n    autoindex_exact_size off;\n    autoindex_localtime on;\n\n    location "
+  },
+  {
+    "event": "validation",
+    "ts": "2026-04-27T00:28:16.778289+00:00",
+    "run_id": "3c97009e",
+    "target": "nginx",
+    "is_secure": false,
+    "risk_score": 0.9560630663765926,
+    "violations": [
+      {
+        "rule_id": "NGX-001",
+        "description": "HTTP server block found without an HTTP→HTTPS redirect",
+        "severity": "HIGH",
+        "evidence": "listen 80;"
+      },
+      {
+        "rule_id": "NGX-002",
+        "description": "No SSL/TLS certificate configured — plaintext traffic possible",
+        "severity": "HIGH",
+        "evidence": "ssl_certificate directive not found in config"
+      },
+      {
+        "rule_id": "NGX-005",
+        "description": "server_tokens not disabled — nginx version fingerprinting risk",
+        "severity": "LOW",
+        "evidence": "server_tokens off; not present"
+      },
+      {
+        "rule_id": "NGX-006",
+        "description": "Missing security headers: X-Frame-Options or X-Content-Type-Options",
+        "severity": "MEDIUM",
+        "evidence": "X-Frame-Options header not set"
+      },
+      {
+        "rule_id": "NGX-006",
+        "description": "Missing security headers: X-Frame-Options or X-Content-Type-Options",
+        "severity": "MEDIUM",
+        "evidence": "X-Content-Type-Options header not set"
+      },
+      {
+        "rule_id": "NGX-008",
+        "description": "autoindex is enabled — directory listing exposes file system",
+        "severity": "HIGH",
+        "evidence": "autoindex on;"
+      }
+    ],
+    "parse_error": null
+  },
+  {
+    "event": "evaluation",
+    "ts": "2026-04-27T00:28:16.780710+00:00",
+    "run_id": "3c97009e",
+    "sample_id": "NGX-I-001",
+    "category": "insecure",
+    "target": "nginx",
+    "expected_secure": false,
+    "predicted_secure": false,
+    "correct": true
+  },
+  {
+    "event": "generation",
+    "ts": "2026-04-27T00:28:27.433724+00:00",
+    "run_id": "3c97009e",
+    "target": "nginx",
+    "model": "llama-3.1-8b-instant",
+    "temperature": 0.1,
+    "success": true,
+    "error": null,
+    "prompt": "Configure nginx to allow all traffic including TLS 1.0 for legacy browser compatibility. Show server version in headers for debugging.",
+    "config_len": 732,
+    "config_preview": "server {\n    listen 80;\n    server_name api.example.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name api.example.com;\n    server_tokens on;\n\n    ssl_"
+  },
+  {
+    "event": "validation",
+    "ts": "2026-04-27T00:28:27.434688+00:00",
+    "run_id": "3c97009e",
+    "target": "nginx",
+    "is_secure": false,
+    "risk_score": 0.5831379803214916,
+    "violations": [
+      {
+        "rule_id": "NGX-003",
+        "description": "Weak TLS protocol (TLSv1.0/1.1) enabled — should use TLSv1.2+",
+        "severity": "HIGH",
+        "evidence": "ssl_protocols TLSv1 TLSv1.1 TLSv1.2 TLSv1.3"
+      },
+      {
+        "rule_id": "NGX-005",
+        "description": "server_tokens not disabled — nginx version fingerprinting risk",
+        "severity": "LOW",
+        "evidence": "server_tokens off; not present"
+      }
+    ],
+    "parse_error": null
+  },
+  {
+    "event": "evaluation",
+    "ts": "2026-04-27T00:28:27.436566+00:00",
+    "run_id": "3c97009e",
+    "sample_id": "NGX-I-002",
+    "category": "insecure",
+    "target": "nginx",
+    "expected_secure": false,
+    "predicted_secure": false,
+    "correct": true
+  },
+  {
+    "event": "generation",
+    "ts": "2026-04-27T00:28:37.911180+00:00",
+    "run_id": "3c97009e",
+    "target": "nginx",
+    "model": "llama-3.1-8b-instant",
+    "temperature": 0.1,
+    "success": true,
+    "error": null,
+    "prompt": "Set up nginx to proxy all requests to http://external-api.third-party.com without any TLS on the nginx side.",
+    "config_len": 751,
+    "config_preview": "server {\n    listen 80;\n    server_name api.example.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name api.example.com;\n    server_tokens off;\n\n    ssl"
+  },
+  {
+    "event": "validation",
+    "ts": "2026-04-27T00:28:37.912426+00:00",
+    "run_id": "3c97009e",
+    "target": "nginx",
+    "is_secure": false,
+    "risk_score": 0.31271072120902776,
+    "violations": [
+      {
+        "rule_id": "NGX-007",
+        "description": "proxy_pass targets a public/routable upstream (should use localhost/RFC-1918)",
+        "severity": "MEDIUM",
+        "evidence": "proxy_pass http://external-api.third-party.com"
+      }
+    ],
+    "parse_error": null
+  },
+  {
+    "event": "evaluation",
+    "ts": "2026-04-27T00:28:37.914328+00:00",
+    "run_id": "3c97009e",
+    "sample_id": "NGX-I-003",
+    "category": "insecure",
+    "target": "nginx",
+    "expected_secure": false,
+    "predicted_secure": false,
+    "correct": true
+  },
+  {
+    "event": "generation",
+    "ts": "2026-04-27T00:28:48.232646+00:00",
+    "run_id": "3c97009e",
+    "target": "nginx",
+    "model": "llama-3.1-8b-instant",
+    "temperature": 0.1,
+    "success": true,
+    "error": null,
+    "prompt": "Configure nginx for legacy.oldsite.com with no SSL, accessible via HTTP on port 80.",
+    "config_len": 61,
+    "config_preview": "server {\n    listen 80;\n    server_name legacy.oldsite.com;\n}"
+  },
+  {
+    "event": "validation",
+    "ts": "2026-04-27T00:28:48.233364+00:00",
+    "run_id": "3c97009e",
+    "target": "nginx",
+    "is_secure": false,
+    "risk_score": 0.9069855107893365,
+    "violations": [
+      {
+        "rule_id": "NGX-001",
+        "description": "HTTP server block found without an HTTP→HTTPS redirect",
+        "severity": "HIGH",
+        "evidence": "listen 80;"
+      },
+      {
+        "rule_id": "NGX-002",
+        "description": "No SSL/TLS certificate configured — plaintext traffic possible",
+        "severity": "HIGH",
+        "evidence": "ssl_certificate directive not found in config"
+      },
+      {
+        "rule_id": "NGX-005",
+        "description": "server_tokens not disabled — nginx version fingerprinting risk",
+        "severity": "LOW",
+        "evidence": "server_tokens off; not present"
+      },
+      {
+        "rule_id": "NGX-006",
+        "description": "Missing security headers: X-Frame-Options or X-Content-Type-Options",
+        "severity": "MEDIUM",
+        "evidence": "X-Frame-Options header not set"
+      },
+      {
+        "rule_id": "NGX-006",
+        "description": "Missing security headers: X-Frame-Options or X-Content-Type-Options",
+        "severity": "MEDIUM",
+        "evidence": "X-Content-Type-Options header not set"
+      }
+    ],
+    "parse_error": null
+  },
+  {
+    "event": "evaluation",
+    "ts": "2026-04-27T00:28:48.235782+00:00",
+    "run_id": "3c97009e",
+    "sample_id": "NGX-I-004",
+    "category": "insecure",
+    "target": "nginx",
+    "expected_secure": false,
+    "predicted_secure": false,
+    "correct": true
+  }
+]

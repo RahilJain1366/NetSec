@@ -1,0 +1,209 @@
+[
+  {
+    "example_id": "secure_nginx",
+    "label": "SECURE nginx \u2014 HTTPS-only API server",
+    "target": "nginx",
+    "expected_secure": true,
+    "predicted_secure": true,
+    "correct": true,
+    "risk_score": 0.0,
+    "violations": [],
+    "config": "server {\n    listen 80;\n    server_name api.example.com;\n    return 301 https://$host$request_uri;\n}\n\nserver {\n    listen 443 ssl http2;\n    server_name api.example.com;\n    server_tokens off;\n\n    ssl_certificate     /etc/ssl/certs/api.example.com.crt;\n    ssl_certificate_key /etc/ssl/private/api.example.com.key;\n    ssl_protocols       TLSv1.2 TLSv1.3;\n    ssl_ciphers         HIGH:!aNULL:!MD5:!RC4;\n    ssl_prefer_server_ciphers on;\n\n    add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains; preload\" always;\n    add_header X-Frame-Options DENY always;\n    add_header X-Content-Type-Options nosniff always;\n    add_header Referrer-Policy strict-origin-when-cross-origin always;\n\n    location / {\n        proxy_pass http://127.0.0.1:8080;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n    }\n\n    location /admin {\n        allow 10.0.0.0/8;\n        deny  all;\n        proxy_pass http://127.0.0.1:8080;\n    }\n}"
+  },
+  {
+    "example_id": "insecure_nginx",
+    "label": "INSECURE nginx \u2014 HTTP-only, directory listing, weak TLS",
+    "target": "nginx",
+    "expected_secure": false,
+    "predicted_secure": false,
+    "correct": true,
+    "risk_score": 0.9857357660910008,
+    "violations": [
+      {
+        "rule_id": "NGX-001",
+        "description": "HTTP server block found without an HTTP\u2192HTTPS redirect",
+        "severity": "HIGH",
+        "evidence": "listen 80;"
+      },
+      {
+        "rule_id": "NGX-003",
+        "description": "Weak TLS protocol (TLSv1.0/1.1) enabled \u2014 should use TLSv1.2+",
+        "severity": "HIGH",
+        "evidence": "ssl_protocols TLSv1 TLSv1.1 TLSv1.2"
+      },
+      {
+        "rule_id": "NGX-004",
+        "description": "HSTS (Strict-Transport-Security) header not set",
+        "severity": "MEDIUM",
+        "evidence": "Strict-Transport-Security header not found"
+      },
+      {
+        "rule_id": "NGX-005",
+        "description": "server_tokens not disabled \u2014 nginx version fingerprinting risk",
+        "severity": "LOW",
+        "evidence": "server_tokens off; not present"
+      },
+      {
+        "rule_id": "NGX-006",
+        "description": "Missing security headers: X-Frame-Options or X-Content-Type-Options",
+        "severity": "MEDIUM",
+        "evidence": "X-Frame-Options header not set"
+      },
+      {
+        "rule_id": "NGX-006",
+        "description": "Missing security headers: X-Frame-Options or X-Content-Type-Options",
+        "severity": "MEDIUM",
+        "evidence": "X-Content-Type-Options header not set"
+      },
+      {
+        "rule_id": "NGX-007",
+        "description": "proxy_pass targets a public/routable upstream (should use localhost/RFC-1918)",
+        "severity": "MEDIUM",
+        "evidence": "proxy_pass http://203.0.113.10:8080"
+      },
+      {
+        "rule_id": "NGX-007",
+        "description": "proxy_pass targets a public/routable upstream (should use localhost/RFC-1918)",
+        "severity": "MEDIUM",
+        "evidence": "proxy_pass http://203.0.113.10:8080"
+      },
+      {
+        "rule_id": "NGX-008",
+        "description": "autoindex is enabled \u2014 directory listing exposes file system",
+        "severity": "HIGH",
+        "evidence": "autoindex on;"
+      }
+    ],
+    "config": "server {\n    listen 80;\n    server_name legacy.example.com;\n\n    location /files/ {\n        root /var/www;\n        autoindex on;\n    }\n\n    location / {\n        proxy_pass http://203.0.113.10:8080;\n    }\n}\n\nserver {\n    listen 443 ssl;\n    ssl_certificate /etc/ssl/certs/legacy.crt;\n    ssl_certificate_key /etc/ssl/private/legacy.key;\n    ssl_protocols TLSv1 TLSv1.1 TLSv1.2;\n\n    location / {\n        proxy_pass http://203.0.113.10:8080;\n    }\n}"
+  },
+  {
+    "example_id": "secure_iptables",
+    "label": "SECURE iptables \u2014 web server, SSH restricted to mgmt subnet",
+    "target": "iptables",
+    "expected_secure": true,
+    "predicted_secure": true,
+    "correct": true,
+    "risk_score": 0.0,
+    "violations": [],
+    "config": "*filter\n:INPUT   DROP [0:0]\n:FORWARD DROP [0:0]\n:OUTPUT  ACCEPT [0:0]\n\n# Allow loopback\n-A INPUT -i lo -j ACCEPT\n\n# Allow established and related connections\n-A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT\n\n# Allow HTTP and HTTPS\n-A INPUT -p tcp --dport 80  -j ACCEPT\n-A INPUT -p tcp --dport 443 -j ACCEPT\n\n# Allow SSH only from management network\n-A INPUT -p tcp --dport 22 -s 10.0.1.0/24 -j ACCEPT\n\n# Log and drop everything else\n-A INPUT -j LOG --log-prefix \"IPT-DROP: \"\nCOMMIT"
+  },
+  {
+    "example_id": "insecure_iptables",
+    "label": "INSECURE iptables \u2014 default ACCEPT, SSH+DB open to world, Telnet",
+    "target": "iptables",
+    "expected_secure": false,
+    "predicted_secure": false,
+    "correct": true,
+    "risk_score": 0.9947524816008186,
+    "violations": [
+      {
+        "rule_id": "IPT-001",
+        "description": "Default INPUT chain policy is not DROP \u2014 allows unrestricted inbound traffic",
+        "severity": "HIGH",
+        "evidence": ":INPUT policy is ACCEPT"
+      },
+      {
+        "rule_id": "IPT-002",
+        "description": "Default FORWARD chain policy is not DROP \u2014 risk of transit traffic abuse",
+        "severity": "HIGH",
+        "evidence": ":FORWARD policy is ACCEPT"
+      },
+      {
+        "rule_id": "IPT-003",
+        "description": "SSH (port 22) is permitted from any source \u2014 administrative access is exposed globally",
+        "severity": "HIGH",
+        "evidence": "-A INPUT -p tcp --dport 22   -j ACCEPT"
+      },
+      {
+        "rule_id": "IPT-004",
+        "description": "No ESTABLISHED/RELATED stateful connection tracking rule found",
+        "severity": "MEDIUM",
+        "evidence": "--state ESTABLISHED,RELATED rule not found"
+      },
+      {
+        "rule_id": "IPT-006",
+        "description": "Telnet (port 23) is permitted \u2014 cleartext protocol, use SSH instead",
+        "severity": "HIGH",
+        "evidence": "-A INPUT -p tcp --dport 23   -j ACCEPT"
+      },
+      {
+        "rule_id": "IPT-008",
+        "description": "Database port (MySQL/Postgres/MongoDB) exposed to 0.0.0.0/0",
+        "severity": "HIGH",
+        "evidence": "MySQL/3306: -A INPUT -p tcp --dport 3306 -j ACCEPT"
+      },
+      {
+        "rule_id": "IPT-008",
+        "description": "Database port (MySQL/Postgres/MongoDB) exposed to 0.0.0.0/0",
+        "severity": "HIGH",
+        "evidence": "Postgres/5432: -A INPUT -p tcp --dport 5432 -j ACCEPT"
+      },
+      {
+        "rule_id": "IPT-010",
+        "description": "Loopback interface (lo) not explicitly permitted \u2014 may break local services",
+        "severity": "MEDIUM",
+        "evidence": "-A INPUT -i lo -j ACCEPT rule not found"
+      }
+    ],
+    "config": "*filter\n:INPUT   ACCEPT [0:0]\n:FORWARD ACCEPT [0:0]\n:OUTPUT  ACCEPT [0:0]\n\n-A INPUT -p tcp --dport 22   -j ACCEPT\n-A INPUT -p tcp --dport 23   -j ACCEPT\n-A INPUT -p tcp --dport 3306 -j ACCEPT\n-A INPUT -p tcp --dport 5432 -j ACCEPT\n\nCOMMIT"
+  },
+  {
+    "example_id": "secure_dns",
+    "label": "SECURE DNS \u2014 authoritative-only, rate-limited, version hidden",
+    "target": "dns",
+    "expected_secure": true,
+    "predicted_secure": true,
+    "correct": true,
+    "risk_score": 0.0,
+    "violations": [],
+    "config": "options {\n    directory \"/var/named\";\n    recursion no;\n    allow-query     { any; };\n    allow-recursion { none; };\n    allow-transfer  { none; };\n    version         \"not disclosed\";\n    rate-limit {\n        responses-per-second 10;\n        window 5;\n        slip 2;\n    };\n    dnssec-validation auto;\n};\n\nzone \"example.com\" IN {\n    type master;\n    file \"example.com.zone\";\n    allow-transfer { 192.0.2.10; };\n};"
+  },
+  {
+    "example_id": "insecure_dns",
+    "label": "INSECURE DNS \u2014 open resolver, zone transfer to anyone",
+    "target": "dns",
+    "expected_secure": false,
+    "predicted_secure": false,
+    "correct": true,
+    "risk_score": 0.9560630663765926,
+    "violations": [
+      {
+        "rule_id": "DNS-001",
+        "description": "DNS recursion enabled \u2014 server may act as an open resolver (DDoS amplification risk)",
+        "severity": "HIGH",
+        "evidence": "recursion yes; without restricted allow-recursion"
+      },
+      {
+        "rule_id": "DNS-002",
+        "description": "allow-recursion { any; } permits recursive queries from the entire internet",
+        "severity": "HIGH",
+        "evidence": "allow-recursion { any; }"
+      },
+      {
+        "rule_id": "DNS-003",
+        "description": "Zone transfer (AXFR) not restricted \u2014 zone data may be exfiltrated",
+        "severity": "HIGH",
+        "evidence": "allow-transfer { any; } found"
+      },
+      {
+        "rule_id": "DNS-004",
+        "description": "DNS version string not hidden \u2014 BIND version may be disclosed via CHAOS class",
+        "severity": "LOW",
+        "evidence": "version \"...\"; not found \u2014 default version disclosure"
+      },
+      {
+        "rule_id": "DNS-005",
+        "description": "Response rate-limiting not configured \u2014 vulnerable to DNS amplification attacks",
+        "severity": "MEDIUM",
+        "evidence": "rate-limit { ... } block not found"
+      },
+      {
+        "rule_id": "DNS-006",
+        "description": "DNSSEC not referenced \u2014 authoritative zones lack signing, resolvers lack validation",
+        "severity": "MEDIUM",
+        "evidence": "No DNSSEC directive (dnssec-enable / dnssec-validation) found"
+      }
+    ],
+    "config": "options {\n    recursion yes;\n    allow-recursion { any; };\n    allow-transfer  { any; };\n    allow-query     { any; };\n};\n\nzone \"example.com\" IN {\n    type master;\n    file \"example.com.zone\";\n};"
+  }
+]

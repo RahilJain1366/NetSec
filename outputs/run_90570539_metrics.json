@@ -1,0 +1,32 @@
+{
+  "total": 31,
+  "correct": 24,
+  "accuracy": 0.774,
+  "precision_insecure": 0.938,
+  "recall_insecure": 0.714,
+  "f1_insecure": 0.811,
+  "false_positive_rate": 0.1,
+  "confusion_matrix": {
+    "TP": 15,
+    "TN": 9,
+    "FP": 1,
+    "FN": 6
+  },
+  "risk_score_by_category": {
+    "secure": {
+      "mean": 0.031,
+      "std": 0.099,
+      "n": 10
+    },
+    "ambiguous": {
+      "mean": 0.128,
+      "std": 0.202,
+      "n": 9
+    },
+    "insecure": {
+      "mean": 0.742,
+      "std": 0.247,
+      "n": 12
+    }
+  }
+}

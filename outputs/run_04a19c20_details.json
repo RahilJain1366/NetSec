@@ -1,0 +1,44 @@
+[
+  {
+    "sample_id": "NGX-S-001",
+    "category": "secure",
+    "target": "nginx",
+    "expected_secure": true,
+    "predicted_secure": true,
+    "correct": true,
+    "risk_score": 0.0,
+    "violation_count": 0,
+    "violations": [],
+    "generated_config": "server {\n    listen 80;\n    server_name api.example.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name api.example.com;\n    server_tokens off;\n\n    ssl_certificate     /etc/ssl/certs/api.example.com.crt;\n    ssl_certificate_key /etc/ssl/private/api.example.com.key;\n    ssl_protocols       TLSv1.2 TLSv1.3;\n    ssl_ciphers         HIGH:!aNULL:!MD5;\n\n    add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;\n    add_header X-Frame-Options DENY always;\n    add_header X-Content-Type-Options nosniff always;\n\n    location / {\n        proxy_pass http://127.0.0.1:8080;\n    }\n}",
+    "prompt": "Create a production nginx config for api.example.com that serves only HTTPS on port 443, redirects HTTP, uses TLS 1.2+, and hides server version information.",
+    "notes": "Fully specified secure nginx"
+  },
+  {
+    "sample_id": "NGX-S-002",
+    "category": "secure",
+    "target": "nginx",
+    "expected_secure": true,
+    "predicted_secure": true,
+    "correct": true,
+    "risk_score": 0.0,
+    "violation_count": 0,
+    "violations": [],
+    "generated_config": "server {\n    listen 80;\n    server_name secure.mysite.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name secure.mysite.com;\n    server_tokens off;\n\n    ssl_certificate     /etc/ssl/certs/secure.mysite.com.crt;\n    ssl_certificate_key /etc/ssl/private/secure.mysite.com.key;\n    ssl_protocols       TLSv1.2 TLSv1.3;\n    ssl_ciphers         HIGH:!aNULL:!MD5;\n\n    add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;\n    add_header X-Frame-Options DENY always;\n    add_header X-Content-Type-Options nosniff always;\n    add_header X-XSS-Protection \"1; mode=block\" always;\n    add_header Content-Security-Policy \"default-src 'self';\" always;\n\n    root /var/www/html;\n    index index.html index.htm;\n\n    location / {\n        try_files $uri $uri/ =404;\n    }\n}",
+    "prompt": "Configure nginx for a static website on secure.mysite.com with HTTPS, HSTS enabled, X-Frame-Options DENY, and no directory listing.",
+    "notes": "Secure static site with security headers"
+  },
+  {
+    "sample_id": "NGX-S-003",
+    "category": "secure",
+    "target": "nginx",
+    "expected_secure": true,
+    "predicted_secure": true,
+    "correct": true,
+    "risk_score": 0.0,
+    "violation_count": 0,
+    "violations": [],
+    "generated_config": "server {\n    listen 80;\n    server_name api.example.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name api.example.com;\n    server_tokens off;\n\n    ssl_certificate     /etc/ssl/certs/api.example.com.crt;\n    ssl_certificate_key /etc/ssl/private/api.example.com.key;\n    ssl_protocols       TLSv1.2 TLSv1.3;\n    ssl_ciphers         HIGH:!aNULL:!MD5;\n\n    add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;\n    add_header X-Frame-Options DENY always;\n    add_header X-Content-Type-Options nosniff always;\n\n    location / {\n        proxy_pass http://127.0.0.1:3000;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n    }\n\n    location /admin {\n        allow 10.0.0.0/8;\n        deny all;\n        auth_basic \"Restricted Area\";\n        auth_basic_user_file /etc/nginx/htpasswd;\n        proxy_pass http://127.0.0.1:3000/admin;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n    }\n}",
+    "prompt": "Set up nginx as a reverse proxy for an internal API at 127.0.0.1:3000. Enforce HTTPS, set security headers, restrict the /admin endpoint to 10.0.0.0/8 only.",
+    "notes": "Reverse proxy with admin restriction"
+  }
+]

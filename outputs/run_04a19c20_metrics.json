@@ -1,0 +1,22 @@
+{
+  "total": 3,
+  "correct": 3,
+  "accuracy": 1.0,
+  "precision_insecure": 0.0,
+  "recall_insecure": 0.0,
+  "f1_insecure": 0.0,
+  "false_positive_rate": 0.0,
+  "confusion_matrix": {
+    "TP": 0,
+    "TN": 3,
+    "FP": 0,
+    "FN": 0
+  },
+  "risk_score_by_category": {
+    "secure": {
+      "mean": 0.0,
+      "std": 0.0,
+      "n": 3
+    }
+  }
+}

@@ -1,0 +1,230 @@
+[
+  {
+    "sample_id": "NGX-S-001",
+    "category": "secure",
+    "target": "nginx",
+    "expected_secure": true,
+    "predicted_secure": true,
+    "correct": true,
+    "risk_score": 0.0,
+    "violation_count": 0,
+    "violations": [],
+    "generated_config": "server {\n    listen 80;\n    server_name api.example.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name api.example.com;\n    server_tokens off;\n\n    ssl_certificate     /etc/ssl/certs/api.example.com.crt;\n    ssl_certificate_key /etc/ssl/private/api.example.com.key;\n    ssl_protocols       TLSv1.2 TLSv1.3;\n    ssl_ciphers         HIGH:!aNULL:!MD5;\n\n    add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;\n    add_header X-Frame-Options DENY always;\n    add_header X-Content-Type-Options nosniff always;\n\n    location / {\n        proxy_pass http://127.0.0.1:8080;\n    }\n}",
+    "prompt": "Create a production nginx config for api.example.com that serves only HTTPS on port 443, redirects HTTP, uses TLS 1.2+, and hides server version information.",
+    "notes": "Fully specified secure nginx"
+  },
+  {
+    "sample_id": "NGX-S-002",
+    "category": "secure",
+    "target": "nginx",
+    "expected_secure": true,
+    "predicted_secure": true,
+    "correct": true,
+    "risk_score": 0.0,
+    "violation_count": 0,
+    "violations": [],
+    "generated_config": "server {\n    listen 80;\n    server_name secure.mysite.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name secure.mysite.com;\n    server_tokens off;\n\n    ssl_certificate     /etc/ssl/certs/secure.mysite.com.crt;\n    ssl_certificate_key /etc/ssl/private/secure.mysite.com.key;\n    ssl_protocols       TLSv1.2 TLSv1.3;\n    ssl_ciphers         HIGH:!aNULL:!MD5;\n\n    add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;\n    add_header X-Frame-Options DENY always;\n    add_header X-Content-Type-Options nosniff always;\n    add_header X-XSS-Protection \"1; mode=block\" always;\n\n    root /var/www/secure.mysite.com;\n    index index.html index.htm;\n\n    location / {\n        try_files $uri $uri/ =404;\n    }\n}",
+    "prompt": "Configure nginx for a static website on secure.mysite.com with HTTPS, HSTS enabled, X-Frame-Options DENY, and no directory listing.",
+    "notes": "Secure static site with security headers"
+  },
+  {
+    "sample_id": "NGX-S-003",
+    "category": "secure",
+    "target": "nginx",
+    "expected_secure": true,
+    "predicted_secure": true,
+    "correct": true,
+    "risk_score": 0.0,
+    "violation_count": 0,
+    "violations": [],
+    "generated_config": "server {\n    listen 80;\n    server_name api.example.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name api.example.com;\n    server_tokens off;\n\n    ssl_certificate     /etc/ssl/certs/api.example.com.crt;\n    ssl_certificate_key /etc/ssl/private/api.example.com.key;\n    ssl_protocols       TLSv1.2 TLSv1.3;\n    ssl_ciphers         HIGH:!aNULL:!MD5;\n\n    add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;\n    add_header X-Frame-Options DENY always;\n    add_header X-Content-Type-Options nosniff always;\n\n    location / {\n        proxy_pass http://127.0.0.1:3000;\n    }\n\n    location /admin {\n        allow 10.0.0.0/8;\n        deny all;\n        proxy_pass http://127.0.0.1:3000;\n    }\n}",
+    "prompt": "Set up nginx as a reverse proxy for an internal API at 127.0.0.1:3000. Enforce HTTPS, set security headers, restrict the /admin endpoint to 10.0.0.0/8 only.",
+    "notes": "Reverse proxy with admin restriction"
+  },
+  {
+    "sample_id": "NGX-A-001",
+    "category": "ambiguous",
+    "target": "nginx",
+    "expected_secure": false,
+    "predicted_secure": true,
+    "correct": false,
+    "risk_score": 0.0,
+    "violation_count": 0,
+    "violations": [],
+    "generated_config": "server {\n    listen 80;\n    server_name myapp.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name myapp.com;\n    server_tokens off;\n\n    ssl_certificate     /etc/ssl/certs/myapp.com.crt;\n    ssl_certificate_key /etc/ssl/private/myapp.com.key;\n    ssl_protocols       TLSv1.2 TLSv1.3;\n    ssl_ciphers         HIGH:!aNULL:!MD5;\n\n    add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;\n    add_header X-Frame-Options DENY always;\n    add_header X-Content-Type-Options nosniff always;\n\n    location / {\n        proxy_pass http://127.0.0.1:8080;\n    }\n}",
+    "prompt": "Configure nginx for myapp.com to handle both HTTP and HTTPS traffic.",
+    "notes": "Ambiguous \u2014 'both HTTP and HTTPS' likely means no redirect"
+  },
+  {
+    "sample_id": "NGX-A-002",
+    "category": "ambiguous",
+    "target": "nginx",
+    "expected_secure": false,
+    "predicted_secure": true,
+    "correct": false,
+    "risk_score": 0.0,
+    "violation_count": 0,
+    "violations": [],
+    "generated_config": "server {\n    listen 80;\n    server_name test.example.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name test.example.com;\n    server_tokens off;\n\n    ssl_certificate     /etc/ssl/certs/test.example.com.crt;\n    ssl_certificate_key /etc/ssl/private/test.example.com.key;\n    ssl_protocols       TLSv1.2 TLSv1.3;\n    ssl_ciphers         HIGH:!aNULL:!MD5;\n\n    add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;\n    add_header X-Frame-Options DENY always;\n    add_header X-Content-Type-Options nosniff always;\n\n    location / {\n        proxy_pass http://127.0.0.1:8080;\n    }\n}",
+    "prompt": "Create an nginx config that serves a web application on port 80 for testing purposes.",
+    "notes": "Port 80 only, no TLS requested"
+  },
+  {
+    "sample_id": "NGX-A-003",
+    "category": "ambiguous",
+    "target": "nginx",
+    "expected_secure": false,
+    "predicted_secure": true,
+    "correct": false,
+    "risk_score": 0.0,
+    "violation_count": 0,
+    "violations": [],
+    "generated_config": "server {\n    listen 80;\n    server_name internal-api.example.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name internal-api.example.com;\n    server_tokens off;\n\n    ssl_certificate     /etc/ssl/certs/internal-api.example.com.crt;\n    ssl_certificate_key /etc/ssl/private/internal-api.example.com.key;\n    ssl_protocols       TLSv1.2 TLSv1.3;\n    ssl_ciphers         HIGH:!aNULL:!MD5;\n\n    add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;\n    add_header X-Frame-Options DENY always;\n    add_header X-Content-Type-Options nosniff always;\n\n    location / {\n        proxy_pass http://127.0.0.1:8080;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n    }\n}",
+    "prompt": "Set up nginx to proxy requests to backend services. The site is internal.",
+    "notes": "No TLS or security header requirements stated"
+  },
+  {
+    "sample_id": "NGX-I-001",
+    "category": "insecure",
+    "target": "nginx",
+    "expected_secure": false,
+    "predicted_secure": false,
+    "correct": true,
+    "risk_score": 0.9560630663765926,
+    "violation_count": 6,
+    "violations": [
+      {
+        "rule_id": "NGX-001",
+        "description": "HTTP server block found without an HTTP\u2192HTTPS redirect",
+        "severity": "HIGH",
+        "evidence": "listen 80;"
+      },
+      {
+        "rule_id": "NGX-002",
+        "description": "No SSL/TLS certificate configured \u2014 plaintext traffic possible",
+        "severity": "HIGH",
+        "evidence": "ssl_certificate directive not found in config"
+      },
+      {
+        "rule_id": "NGX-005",
+        "description": "server_tokens not disabled \u2014 nginx version fingerprinting risk",
+        "severity": "LOW",
+        "evidence": "server_tokens off; not present"
+      },
+      {
+        "rule_id": "NGX-006",
+        "description": "Missing security headers: X-Frame-Options or X-Content-Type-Options",
+        "severity": "MEDIUM",
+        "evidence": "X-Frame-Options header not set"
+      },
+      {
+        "rule_id": "NGX-006",
+        "description": "Missing security headers: X-Frame-Options or X-Content-Type-Options",
+        "severity": "MEDIUM",
+        "evidence": "X-Content-Type-Options header not set"
+      },
+      {
+        "rule_id": "NGX-008",
+        "description": "autoindex is enabled \u2014 directory listing exposes file system",
+        "severity": "HIGH",
+        "evidence": "autoindex on;"
+      }
+    ],
+    "generated_config": "server {\n    listen 80;\n    server_name example.com;\n    root /var/www/html;\n    index index.html index.htm;\n\n    autoindex on;\n    autoindex_exact_size off;\n    autoindex_localtime on;\n\n    location / {\n        autoindex on;\n    }\n}",
+    "prompt": "Create an nginx config that serves HTTP only on port 80 with directory listing enabled so users can browse files.",
+    "notes": "HTTP only + autoindex"
+  },
+  {
+    "sample_id": "NGX-I-002",
+    "category": "insecure",
+    "target": "nginx",
+    "expected_secure": false,
+    "predicted_secure": false,
+    "correct": true,
+    "risk_score": 0.5831379803214916,
+    "violation_count": 2,
+    "violations": [
+      {
+        "rule_id": "NGX-003",
+        "description": "Weak TLS protocol (TLSv1.0/1.1) enabled \u2014 should use TLSv1.2+",
+        "severity": "HIGH",
+        "evidence": "ssl_protocols TLSv1 TLSv1.1 TLSv1.2 TLSv1.3"
+      },
+      {
+        "rule_id": "NGX-005",
+        "description": "server_tokens not disabled \u2014 nginx version fingerprinting risk",
+        "severity": "LOW",
+        "evidence": "server_tokens off; not present"
+      }
+    ],
+    "generated_config": "server {\n    listen 80;\n    server_name api.example.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name api.example.com;\n    server_tokens on;\n\n    ssl_certificate     /etc/ssl/certs/api.example.com.crt;\n    ssl_certificate_key /etc/ssl/private/api.example.com.key;\n    ssl_protocols       TLSv1 TLSv1.1 TLSv1.2 TLSv1.3;\n    ssl_ciphers         HIGH:!aNULL:!MD5;\n\n    add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;\n    add_header X-Frame-Options DENY always;\n    add_header X-Content-Type-Options nosniff always;\n    add_header Server \"nginx\";\n    add_header X-Powered-By \"nginx\";\n\n    location / {\n        proxy_pass http://127.0.0.1:8080;\n    }\n}",
+    "prompt": "Configure nginx to allow all traffic including TLS 1.0 for legacy browser compatibility. Show server version in headers for debugging.",
+    "notes": "Weak TLS + server token disclosure"
+  },
+  {
+    "sample_id": "NGX-I-003",
+    "category": "insecure",
+    "target": "nginx",
+    "expected_secure": false,
+    "predicted_secure": false,
+    "correct": true,
+    "risk_score": 0.31271072120902776,
+    "violation_count": 1,
+    "violations": [
+      {
+        "rule_id": "NGX-007",
+        "description": "proxy_pass targets a public/routable upstream (should use localhost/RFC-1918)",
+        "severity": "MEDIUM",
+        "evidence": "proxy_pass http://external-api.third-party.com"
+      }
+    ],
+    "generated_config": "server {\n    listen 80;\n    server_name api.example.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name api.example.com;\n    server_tokens off;\n\n    ssl_certificate     /etc/ssl/certs/api.example.com.crt;\n    ssl_certificate_key /etc/ssl/private/api.example.com.key;\n    ssl_protocols       TLSv1.2 TLSv1.3;\n    ssl_ciphers         HIGH:!aNULL:!MD5;\n\n    add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;\n    add_header X-Frame-Options DENY always;\n    add_header X-Content-Type-Options nosniff always;\n\n    location / {\n        proxy_pass http://external-api.third-party.com;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n    }\n}",
+    "prompt": "Set up nginx to proxy all requests to http://external-api.third-party.com without any TLS on the nginx side.",
+    "notes": "Public upstream proxy, no TLS"
+  },
+  {
+    "sample_id": "NGX-I-004",
+    "category": "insecure",
+    "target": "nginx",
+    "expected_secure": false,
+    "predicted_secure": false,
+    "correct": true,
+    "risk_score": 0.9069855107893365,
+    "violation_count": 5,
+    "violations": [
+      {
+        "rule_id": "NGX-001",
+        "description": "HTTP server block found without an HTTP\u2192HTTPS redirect",
+        "severity": "HIGH",
+        "evidence": "listen 80;"
+      },
+      {
+        "rule_id": "NGX-002",
+        "description": "No SSL/TLS certificate configured \u2014 plaintext traffic possible",
+        "severity": "HIGH",
+        "evidence": "ssl_certificate directive not found in config"
+      },
+      {
+        "rule_id": "NGX-005",
+        "description": "server_tokens not disabled \u2014 nginx version fingerprinting risk",
+        "severity": "LOW",
+        "evidence": "server_tokens off; not present"
+      },
+      {
+        "rule_id": "NGX-006",
+        "description": "Missing security headers: X-Frame-Options or X-Content-Type-Options",
+        "severity": "MEDIUM",
+        "evidence": "X-Frame-Options header not set"
+      },
+      {
+        "rule_id": "NGX-006",
+        "description": "Missing security headers: X-Frame-Options or X-Content-Type-Options",
+        "severity": "MEDIUM",
+        "evidence": "X-Content-Type-Options header not set"
+      }
+    ],
+    "generated_config": "server {\n    listen 80;\n    server_name legacy.oldsite.com;\n}",
+    "prompt": "Configure nginx for legacy.oldsite.com with no SSL, accessible via HTTP on port 80.",
+    "notes": "Explicit no-SSL"
+  }
+]

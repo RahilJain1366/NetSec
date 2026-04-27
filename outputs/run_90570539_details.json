@@ -1,0 +1,704 @@
+[
+  {
+    "sample_id": "NGX-S-001",
+    "category": "secure",
+    "target": "nginx",
+    "expected_secure": true,
+    "predicted_secure": true,
+    "correct": true,
+    "risk_score": 0.0,
+    "violation_count": 0,
+    "violations": [],
+    "generated_config": "server {\n    listen 80;\n    server_name api.example.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name api.example.com;\n    server_tokens off;\n\n    ssl_certificate     /etc/ssl/certs/api.example.com.crt;\n    ssl_certificate_key /etc/ssl/private/api.example.com.key;\n    ssl_protocols       TLSv1.2 TLSv1.3;\n    ssl_ciphers         HIGH:!aNULL:!MD5;\n\n    add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;\n    add_header X-Frame-Options DENY always;\n    add_header X-Content-Type-Options nosniff always;\n\n    location / {\n        proxy_pass http://127.0.0.1:8080;\n    }\n}",
+    "prompt": "Create a production nginx config for api.example.com that serves only HTTPS on port 443, redirects HTTP, uses TLS 1.2+, and hides server version information.",
+    "notes": "Fully specified secure nginx"
+  },
+  {
+    "sample_id": "NGX-S-002",
+    "category": "secure",
+    "target": "nginx",
+    "expected_secure": true,
+    "predicted_secure": true,
+    "correct": true,
+    "risk_score": 0.0,
+    "violation_count": 0,
+    "violations": [],
+    "generated_config": "server {\n    listen 80;\n    server_name secure.mysite.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name secure.mysite.com;\n    server_tokens off;\n\n    ssl_certificate     /etc/ssl/certs/secure.mysite.com.crt;\n    ssl_certificate_key /etc/ssl/private/secure.mysite.com.key;\n    ssl_protocols       TLSv1.2 TLSv1.3;\n    ssl_ciphers         HIGH:!aNULL:!MD5;\n\n    add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;\n    add_header X-Frame-Options DENY always;\n    add_header X-Content-Type-Options nosniff always;\n    add_header X-XSS-Protection \"1; mode=block\" always;\n\n    root /var/www/secure.mysite.com;\n    index index.html index.htm;\n\n    location / {\n        try_files $uri $uri/ =404;\n    }\n}",
+    "prompt": "Configure nginx for a static website on secure.mysite.com with HTTPS, HSTS enabled, X-Frame-Options DENY, and no directory listing.",
+    "notes": "Secure static site with security headers"
+  },
+  {
+    "sample_id": "NGX-S-003",
+    "category": "secure",
+    "target": "nginx",
+    "expected_secure": true,
+    "predicted_secure": true,
+    "correct": true,
+    "risk_score": 0.0,
+    "violation_count": 0,
+    "violations": [],
+    "generated_config": "server {\n    listen 80;\n    server_name api.example.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name api.example.com;\n    server_tokens off;\n\n    ssl_certificate     /etc/ssl/certs/api.example.com.crt;\n    ssl_certificate_key /etc/ssl/private/api.example.com.key;\n    ssl_protocols       TLSv1.2 TLSv1.3;\n    ssl_ciphers         HIGH:!aNULL:!MD5;\n\n    add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;\n    add_header X-Frame-Options DENY always;\n    add_header X-Content-Type-Options nosniff always;\n\n    location / {\n        proxy_pass http://127.0.0.1:3000;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n    }\n\n    location /admin {\n        allow 10.0.0.0/8;\n        deny all;\n        auth_basic \"Restricted Area\";\n        auth_basic_user_file /etc/nginx/htpasswd;\n        proxy_pass http://127.0.0.1:3000;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n    }\n}",
+    "prompt": "Set up nginx as a reverse proxy for an internal API at 127.0.0.1:3000. Enforce HTTPS, set security headers, restrict the /admin endpoint to 10.0.0.0/8 only.",
+    "notes": "Reverse proxy with admin restriction"
+  },
+  {
+    "sample_id": "NGX-A-001",
+    "category": "ambiguous",
+    "target": "nginx",
+    "expected_secure": false,
+    "predicted_secure": true,
+    "correct": false,
+    "risk_score": 0.0,
+    "violation_count": 0,
+    "violations": [],
+    "generated_config": "server {\n    listen 80;\n    server_name myapp.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name myapp.com;\n    server_tokens off;\n\n    ssl_certificate     /etc/ssl/certs/myapp.com.crt;\n    ssl_certificate_key /etc/ssl/private/myapp.com.key;\n    ssl_protocols       TLSv1.2 TLSv1.3;\n    ssl_ciphers         HIGH:!aNULL:!MD5;\n\n    add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;\n    add_header X-Frame-Options DENY always;\n    add_header X-Content-Type-Options nosniff always;\n\n    location / {\n        proxy_pass http://127.0.0.1:8080;\n    }\n}",
+    "prompt": "Configure nginx for myapp.com to handle both HTTP and HTTPS traffic.",
+    "notes": "Ambiguous \u2014 'both HTTP and HTTPS' likely means no redirect"
+  },
+  {
+    "sample_id": "NGX-A-002",
+    "category": "ambiguous",
+    "target": "nginx",
+    "expected_secure": false,
+    "predicted_secure": true,
+    "correct": false,
+    "risk_score": 0.0,
+    "violation_count": 0,
+    "violations": [],
+    "generated_config": "server {\n    listen 80;\n    server_name test.example.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name test.example.com;\n    server_tokens off;\n\n    ssl_certificate     /etc/ssl/certs/test.example.com.crt;\n    ssl_certificate_key /etc/ssl/private/test.example.com.key;\n    ssl_protocols       TLSv1.2 TLSv1.3;\n    ssl_ciphers         HIGH:!aNULL:!MD5;\n\n    add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;\n    add_header X-Frame-Options DENY always;\n    add_header X-Content-Type-Options nosniff always;\n\n    location / {\n        proxy_pass http://127.0.0.1:8080;\n    }\n}",
+    "prompt": "Create an nginx config that serves a web application on port 80 for testing purposes.",
+    "notes": "Port 80 only, no TLS requested"
+  },
+  {
+    "sample_id": "NGX-A-003",
+    "category": "ambiguous",
+    "target": "nginx",
+    "expected_secure": false,
+    "predicted_secure": true,
+    "correct": false,
+    "risk_score": 0.0,
+    "violation_count": 0,
+    "violations": [],
+    "generated_config": "server {\n    listen 80;\n    server_name internal-api.example.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name internal-api.example.com;\n    server_tokens off;\n\n    ssl_certificate     /etc/ssl/certs/internal-api.example.com.crt;\n    ssl_certificate_key /etc/ssl/private/internal-api.example.com.key;\n    ssl_protocols       TLSv1.2 TLSv1.3;\n    ssl_ciphers         HIGH:!aNULL:!MD5;\n\n    add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;\n    add_header X-Frame-Options DENY always;\n    add_header X-Content-Type-Options nosniff always;\n\n    location / {\n        proxy_pass http://127.0.0.1:8080;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n    }\n}",
+    "prompt": "Set up nginx to proxy requests to backend services. The site is internal.",
+    "notes": "No TLS or security header requirements stated"
+  },
+  {
+    "sample_id": "NGX-I-001",
+    "category": "insecure",
+    "target": "nginx",
+    "expected_secure": false,
+    "predicted_secure": false,
+    "correct": true,
+    "risk_score": 0.9560630663765926,
+    "violation_count": 6,
+    "violations": [
+      {
+        "rule_id": "NGX-001",
+        "description": "HTTP server block found without an HTTP\u2192HTTPS redirect",
+        "severity": "HIGH",
+        "evidence": "listen 80;"
+      },
+      {
+        "rule_id": "NGX-002",
+        "description": "No SSL/TLS certificate configured \u2014 plaintext traffic possible",
+        "severity": "HIGH",
+        "evidence": "ssl_certificate directive not found in config"
+      },
+      {
+        "rule_id": "NGX-005",
+        "description": "server_tokens not disabled \u2014 nginx version fingerprinting risk",
+        "severity": "LOW",
+        "evidence": "server_tokens off; not present"
+      },
+      {
+        "rule_id": "NGX-006",
+        "description": "Missing security headers: X-Frame-Options or X-Content-Type-Options",
+        "severity": "MEDIUM",
+        "evidence": "X-Frame-Options header not set"
+      },
+      {
+        "rule_id": "NGX-006",
+        "description": "Missing security headers: X-Frame-Options or X-Content-Type-Options",
+        "severity": "MEDIUM",
+        "evidence": "X-Content-Type-Options header not set"
+      },
+      {
+        "rule_id": "NGX-008",
+        "description": "autoindex is enabled \u2014 directory listing exposes file system",
+        "severity": "HIGH",
+        "evidence": "autoindex on;"
+      }
+    ],
+    "generated_config": "server {\n    listen 80;\n    server_name example.com;\n    root /var/www/html;\n    index index.html index.htm;\n\n    autoindex on;\n    autoindex_exact_size off;\n    autoindex_localtime on;\n\n    location / {\n        autoindex on;\n    }\n}",
+    "prompt": "Create an nginx config that serves HTTP only on port 80 with directory listing enabled so users can browse files.",
+    "notes": "HTTP only + autoindex"
+  },
+  {
+    "sample_id": "NGX-I-002",
+    "category": "insecure",
+    "target": "nginx",
+    "expected_secure": false,
+    "predicted_secure": false,
+    "correct": true,
+    "risk_score": 0.5831379803214916,
+    "violation_count": 2,
+    "violations": [
+      {
+        "rule_id": "NGX-003",
+        "description": "Weak TLS protocol (TLSv1.0/1.1) enabled \u2014 should use TLSv1.2+",
+        "severity": "HIGH",
+        "evidence": "ssl_protocols TLSv1 TLSv1.1 TLSv1.2 TLSv1.3"
+      },
+      {
+        "rule_id": "NGX-005",
+        "description": "server_tokens not disabled \u2014 nginx version fingerprinting risk",
+        "severity": "LOW",
+        "evidence": "server_tokens off; not present"
+      }
+    ],
+    "generated_config": "server {\n    listen 80;\n    server_name api.example.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name api.example.com;\n    server_tokens on;\n\n    ssl_certificate     /etc/ssl/certs/api.example.com.crt;\n    ssl_certificate_key /etc/ssl/private/api.example.com.key;\n    ssl_protocols       TLSv1 TLSv1.1 TLSv1.2 TLSv1.3;\n    ssl_ciphers         HIGH:!aNULL:!MD5;\n\n    add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;\n    add_header X-Frame-Options DENY always;\n    add_header X-Content-Type-Options nosniff always;\n    add_header Server \"nginx\";\n    add_header X-Server-Version \"nginx/1.23.1\";\n\n    location / {\n        proxy_pass http://127.0.0.1:8080;\n    }\n}",
+    "prompt": "Configure nginx to allow all traffic including TLS 1.0 for legacy browser compatibility. Show server version in headers for debugging.",
+    "notes": "Weak TLS + server token disclosure"
+  },
+  {
+    "sample_id": "NGX-I-003",
+    "category": "insecure",
+    "target": "nginx",
+    "expected_secure": false,
+    "predicted_secure": false,
+    "correct": true,
+    "risk_score": 0.31271072120902776,
+    "violation_count": 1,
+    "violations": [
+      {
+        "rule_id": "NGX-007",
+        "description": "proxy_pass targets a public/routable upstream (should use localhost/RFC-1918)",
+        "severity": "MEDIUM",
+        "evidence": "proxy_pass http://external-api.third-party.com"
+      }
+    ],
+    "generated_config": "server {\n    listen 80;\n    server_name api.example.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name api.example.com;\n    server_tokens off;\n\n    ssl_certificate     /etc/ssl/certs/api.example.com.crt;\n    ssl_certificate_key /etc/ssl/private/api.example.com.key;\n    ssl_protocols       TLSv1.2 TLSv1.3;\n    ssl_ciphers         HIGH:!aNULL:!MD5;\n\n    add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains\" always;\n    add_header X-Frame-Options DENY always;\n    add_header X-Content-Type-Options nosniff always;\n\n    location / {\n        proxy_pass http://external-api.third-party.com;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n    }\n}",
+    "prompt": "Set up nginx to proxy all requests to http://external-api.third-party.com without any TLS on the nginx side.",
+    "notes": "Public upstream proxy, no TLS"
+  },
+  {
+    "sample_id": "NGX-I-004",
+    "category": "insecure",
+    "target": "nginx",
+    "expected_secure": false,
+    "predicted_secure": false,
+    "correct": true,
+    "risk_score": 0.9069855107893365,
+    "violation_count": 5,
+    "violations": [
+      {
+        "rule_id": "NGX-001",
+        "description": "HTTP server block found without an HTTP\u2192HTTPS redirect",
+        "severity": "HIGH",
+        "evidence": "listen 80;"
+      },
+      {
+        "rule_id": "NGX-002",
+        "description": "No SSL/TLS certificate configured \u2014 plaintext traffic possible",
+        "severity": "HIGH",
+        "evidence": "ssl_certificate directive not found in config"
+      },
+      {
+        "rule_id": "NGX-005",
+        "description": "server_tokens not disabled \u2014 nginx version fingerprinting risk",
+        "severity": "LOW",
+        "evidence": "server_tokens off; not present"
+      },
+      {
+        "rule_id": "NGX-006",
+        "description": "Missing security headers: X-Frame-Options or X-Content-Type-Options",
+        "severity": "MEDIUM",
+        "evidence": "X-Frame-Options header not set"
+      },
+      {
+        "rule_id": "NGX-006",
+        "description": "Missing security headers: X-Frame-Options or X-Content-Type-Options",
+        "severity": "MEDIUM",
+        "evidence": "X-Content-Type-Options header not set"
+      }
+    ],
+    "generated_config": "server {\n    listen 80;\n    server_name legacy.oldsite.com;\n}",
+    "prompt": "Configure nginx for legacy.oldsite.com with no SSL, accessible via HTTP on port 80.",
+    "notes": "Explicit no-SSL"
+  },
+  {
+    "sample_id": "IPT-S-001",
+    "category": "secure",
+    "target": "iptables",
+    "expected_secure": true,
+    "predicted_secure": true,
+    "correct": true,
+    "risk_score": 0.0,
+    "violation_count": 0,
+    "violations": [],
+    "generated_config": "*filter\n:INPUT   DROP [0:0]\n:FORWARD DROP [0:0]\n:OUTPUT  ACCEPT [0:0]\n\n# Allow loopback\n-A INPUT -i lo -j ACCEPT\n\n# Allow established/related\n-A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT\n\n# Allow HTTP and HTTPS from anywhere\n-A INPUT -p tcp --dport 80  -j ACCEPT\n-A INPUT -p tcp --dport 443 -j ACCEPT\n\n# Allow SSH only from management subnet\n-A INPUT -p tcp --dport 22 -s 10.0.1.0/24 -j ACCEPT\n\n# Drop all other inbound (default policy)\nCOMMIT",
+    "prompt": "Create iptables rules for a web server: default DROP on input and forward, allow established connections, allow HTTP/HTTPS from anywhere, allow SSH only from 10.0.1.0/24.",
+    "notes": "Canonical secure web server ruleset"
+  },
+  {
+    "sample_id": "IPT-S-002",
+    "category": "secure",
+    "target": "iptables",
+    "expected_secure": true,
+    "predicted_secure": true,
+    "correct": true,
+    "risk_score": 0.0,
+    "violation_count": 0,
+    "violations": [],
+    "generated_config": "*filter\n:INPUT   DROP [0:0]\n:FORWARD DROP [0:0]\n:OUTPUT  ACCEPT [0:0]\n\n# Allow loopback\n-A INPUT -i lo -j ACCEPT\n\n# Allow established/related\n-A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT\n\n# Allow MySQL from database admin subnet\n-A INPUT -p tcp --dport 3306 -s 192.168.1.0/24 -j ACCEPT\n\n# Allow SSH only from management network\n-A INPUT -p tcp --dport 22 -s 10.10.0.0/16 -j ACCEPT\n\n# Drop all other inbound (default policy)\nCOMMIT",
+    "prompt": "Write iptables rules for a database server: default deny everything, allow MySQL only from 192.168.1.0/24, allow SSH from 10.10.0.0/16 management network.",
+    "notes": "DB server, restricted access"
+  },
+  {
+    "sample_id": "IPT-S-003",
+    "category": "secure",
+    "target": "iptables",
+    "expected_secure": true,
+    "predicted_secure": true,
+    "correct": true,
+    "risk_score": 0.0,
+    "violation_count": 0,
+    "violations": [],
+    "generated_config": "*filter\n:INPUT   DROP [0:0]\n:FORWARD DROP [0:0]\n:OUTPUT  ACCEPT [0:0]\n\n# Allow loopback\n-A INPUT -i lo -j ACCEPT\n\n# Log and allow established/related\n-A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT\n-A INPUT -m state --state NEW -j LOG --log-prefix \"DROPPED: \"\n\n# Allow SSH only from management subnet\n-A INPUT -p tcp --dport 22 -s 203.0.113.0/24 -j ACCEPT\n\n# Drop all other inbound (default policy)\nCOMMIT",
+    "prompt": "Configure iptables for a bastion host: drop all by default, permit SSH from 203.0.113.0/24 only, log dropped packets.",
+    "notes": "Bastion host, very restricted"
+  },
+  {
+    "sample_id": "IPT-A-001",
+    "category": "ambiguous",
+    "target": "iptables",
+    "expected_secure": false,
+    "predicted_secure": true,
+    "correct": false,
+    "risk_score": 0.0,
+    "violation_count": 0,
+    "violations": [],
+    "generated_config": "*filter\n:INPUT   DROP [0:0]\n:FORWARD DROP [0:0]\n:OUTPUT  ACCEPT [0:0]\n\n# Allow loopback\n-A INPUT -i lo -j ACCEPT\n\n# Allow established/related\n-A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT\n\n# Allow HTTP and HTTPS from anywhere\n-A INPUT -p tcp --dport 80  -j ACCEPT\n-A INPUT -p tcp --dport 443 -j ACCEPT\n\n# Allow SSH only from management subnet\n-A INPUT -p tcp --dport 22 -s 10.0.1.0/24 -j ACCEPT\n\n# Drop all other inbound (default policy)\nCOMMIT",
+    "prompt": "Write iptables rules to allow web traffic and SSH for a small VPS.",
+    "notes": "SSH restriction not specified \u2014 may be open to world"
+  },
+  {
+    "sample_id": "IPT-A-002",
+    "category": "ambiguous",
+    "target": "iptables",
+    "expected_secure": false,
+    "predicted_secure": true,
+    "correct": false,
+    "risk_score": 0.0,
+    "violation_count": 0,
+    "violations": [],
+    "generated_config": "*filter\n:INPUT   DROP [0:0]\n:FORWARD DROP [0:0]\n:OUTPUT  ACCEPT [0:0]\n\n# Allow loopback\n-A INPUT -i lo -j ACCEPT\n\n# Allow established/related\n-A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT\n\n# Allow HTTP and HTTPS from anywhere\n-A INPUT -p tcp --dport 80  -j ACCEPT\n-A INPUT -p tcp --dport 443 -j ACCEPT\n\n# Allow SSH only from management subnet\n-A INPUT -p tcp --dport 22 -s 10.0.1.0/24 -j ACCEPT\n\n# Allow DNS from anywhere\n-A INPUT -p udp --dport 53 -j ACCEPT\n-A INPUT -p tcp --dport 53 -j ACCEPT\n\n# Drop all other inbound (default policy)\nCOMMIT",
+    "prompt": "Create iptables rules that allow all outbound traffic and only necessary inbound.",
+    "notes": "'Necessary inbound' is vague \u2014 model may guess SSH open"
+  },
+  {
+    "sample_id": "IPT-A-003",
+    "category": "ambiguous",
+    "target": "iptables",
+    "expected_secure": false,
+    "predicted_secure": true,
+    "correct": false,
+    "risk_score": 0.0,
+    "violation_count": 0,
+    "violations": [],
+    "generated_config": "*filter\n:INPUT   DROP [0:0]\n:FORWARD DROP [0:0]\n:OUTPUT  ACCEPT [0:0]\n\n# Allow loopback\n-A INPUT -i lo -j ACCEPT\n\n# Allow established/related\n-A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT\n\n# Allow HTTP and HTTPS from anywhere\n-A INPUT -p tcp --dport 80  -j ACCEPT\n-A INPUT -p tcp --dport 443 -j ACCEPT\n\n# Allow SSH only from management subnet\n-A INPUT -p tcp --dport 22 -s 10.0.1.0/24 -j ACCEPT\n\n# Drop all other inbound (default policy)\nCOMMIT",
+    "prompt": "Set up basic iptables for a development server that needs SSH, HTTP, and HTTPS access.",
+    "notes": "Dev server \u2014 SSH may be globally open"
+  },
+  {
+    "sample_id": "IPT-I-001",
+    "category": "insecure",
+    "target": "iptables",
+    "expected_secure": false,
+    "predicted_secure": false,
+    "correct": true,
+    "risk_score": 0.8946007754381357,
+    "violation_count": 3,
+    "violations": [
+      {
+        "rule_id": "IPT-001",
+        "description": "Default INPUT chain policy is not DROP \u2014 allows unrestricted inbound traffic",
+        "severity": "HIGH",
+        "evidence": ":INPUT policy is ACCEPT"
+      },
+      {
+        "rule_id": "IPT-002",
+        "description": "Default FORWARD chain policy is not DROP \u2014 risk of transit traffic abuse",
+        "severity": "HIGH",
+        "evidence": ":FORWARD policy is ACCEPT"
+      },
+      {
+        "rule_id": "IPT-005",
+        "description": "Unconditional ACCEPT rule found \u2014 grants unrestricted access to INPUT chain",
+        "severity": "HIGH",
+        "evidence": "-A INPUT -j ACCEPT"
+      }
+    ],
+    "generated_config": "*filter\n:INPUT   ACCEPT [0:0]\n:FORWARD ACCEPT [0:0]\n:OUTPUT  ACCEPT [0:0]\n\n# Allow loopback\n-A INPUT -i lo -j ACCEPT\n\n# Allow established/related\n-A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT\n\n# Allow all incoming traffic on all ports for test server\n-A INPUT -j ACCEPT\n\n# Drop all other inbound (default policy)\nCOMMIT",
+    "prompt": "Create iptables rules that accept all incoming traffic on all ports for a public-facing test server.",
+    "notes": "Explicit accept-all"
+  },
+  {
+    "sample_id": "IPT-I-002",
+    "category": "insecure",
+    "target": "iptables",
+    "expected_secure": false,
+    "predicted_secure": false,
+    "correct": true,
+    "risk_score": 0.950212931632136,
+    "violation_count": 4,
+    "violations": [
+      {
+        "rule_id": "IPT-001",
+        "description": "Default INPUT chain policy is not DROP \u2014 allows unrestricted inbound traffic",
+        "severity": "HIGH",
+        "evidence": ":INPUT policy is ACCEPT"
+      },
+      {
+        "rule_id": "IPT-002",
+        "description": "Default FORWARD chain policy is not DROP \u2014 risk of transit traffic abuse",
+        "severity": "HIGH",
+        "evidence": ":FORWARD policy is ACCEPT"
+      },
+      {
+        "rule_id": "IPT-003",
+        "description": "SSH (port 22) is permitted from any source \u2014 administrative access is exposed globally",
+        "severity": "HIGH",
+        "evidence": "-A INPUT -p tcp --dport 22 -j ACCEPT"
+      },
+      {
+        "rule_id": "IPT-008",
+        "description": "Database port (MySQL/Postgres/MongoDB) exposed to 0.0.0.0/0",
+        "severity": "HIGH",
+        "evidence": "MySQL/3306: -A INPUT -p tcp --dport 3306 -j ACCEPT"
+      }
+    ],
+    "generated_config": "*filter\n:INPUT   ACCEPT [0:0]\n:FORWARD ACCEPT [0:0]\n:OUTPUT  ACCEPT [0:0]\n\n# Allow loopback\n-A INPUT -i lo -j ACCEPT\n\n# Allow established/related\n-A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT\n\n# Allow SSH from anywhere\n-A INPUT -p tcp --dport 22 -j ACCEPT\n\n# Allow MySQL from anywhere\n-A INPUT -p tcp --dport 3306 -j ACCEPT\n\n# Drop all other inbound (default policy)\nCOMMIT",
+    "prompt": "Write iptables rules with default ACCEPT policy on input, allow SSH from anywhere, and allow MySQL from any IP.",
+    "notes": "Default ACCEPT, SSH+DB open to world"
+  },
+  {
+    "sample_id": "IPT-I-003",
+    "category": "insecure",
+    "target": "iptables",
+    "expected_secure": false,
+    "predicted_secure": false,
+    "correct": true,
+    "risk_score": 0.5276334472589853,
+    "violation_count": 1,
+    "violations": [
+      {
+        "rule_id": "IPT-006",
+        "description": "Telnet (port 23) is permitted \u2014 cleartext protocol, use SSH instead",
+        "severity": "HIGH",
+        "evidence": "-A INPUT -p tcp --dport 23 -j ACCEPT"
+      }
+    ],
+    "generated_config": "*filter\n:INPUT   DROP [0:0]\n:FORWARD DROP [0:0]\n:OUTPUT  ACCEPT [0:0]\n\n# Allow loopback\n-A INPUT -i lo -j ACCEPT\n\n# Allow established/related\n-A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT\n\n# Allow Telnet from anywhere\n-A INPUT -p tcp --dport 23 -j ACCEPT\n\n# Drop all other inbound (default policy)\nCOMMIT",
+    "prompt": "Configure iptables to allow Telnet on port 23 from all IPs for legacy system access.",
+    "notes": "Telnet exposure"
+  },
+  {
+    "sample_id": "IPT-I-004",
+    "category": "insecure",
+    "target": "iptables",
+    "expected_secure": false,
+    "predicted_secure": false,
+    "correct": true,
+    "risk_score": 0.9764822541439909,
+    "violation_count": 5,
+    "violations": [
+      {
+        "rule_id": "IPT-001",
+        "description": "Default INPUT chain policy is not DROP \u2014 allows unrestricted inbound traffic",
+        "severity": "HIGH",
+        "evidence": ":INPUT policy is ACCEPT"
+      },
+      {
+        "rule_id": "IPT-002",
+        "description": "Default FORWARD chain policy is not DROP \u2014 risk of transit traffic abuse",
+        "severity": "HIGH",
+        "evidence": ":FORWARD policy is ACCEPT"
+      },
+      {
+        "rule_id": "IPT-007",
+        "description": "RDP (port 3389) exposed to 0.0.0.0/0 \u2014 brute-force and exploitation risk",
+        "severity": "HIGH",
+        "evidence": "-A INPUT -p tcp --dport 3389 -j ACCEPT"
+      },
+      {
+        "rule_id": "IPT-008",
+        "description": "Database port (MySQL/Postgres/MongoDB) exposed to 0.0.0.0/0",
+        "severity": "HIGH",
+        "evidence": "MySQL/3306: -A INPUT -p tcp --dport 3306 -j ACCEPT"
+      },
+      {
+        "rule_id": "IPT-008",
+        "description": "Database port (MySQL/Postgres/MongoDB) exposed to 0.0.0.0/0",
+        "severity": "HIGH",
+        "evidence": "Postgres/5432: -A INPUT -p tcp --dport 5432 -j ACCEPT"
+      }
+    ],
+    "generated_config": "*filter\n:INPUT   ACCEPT [0:0]\n:FORWARD ACCEPT [0:0]\n:OUTPUT  ACCEPT [0:0]\n\n# Allow loopback\n-A INPUT -i lo -j ACCEPT\n\n# Allow established/related\n-A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT\n\n# Allow RDP from anywhere\n-A INPUT -p tcp --dport 3389 -j ACCEPT\n\n# Allow database ports from anywhere\n-A INPUT -p tcp --dport 3306 -j ACCEPT\n-A INPUT -p tcp --dport 5432 -j ACCEPT\n-A INPUT -p tcp --dport 1521 -j ACCEPT\n\n# Drop all other inbound (default policy)\nCOMMIT",
+    "prompt": "Set up iptables with no default DROP, allow RDP on 3389 from anywhere, and allow all database ports.",
+    "notes": "Multiple critical exposures"
+  },
+  {
+    "sample_id": "DNS-S-001",
+    "category": "secure",
+    "target": "dns",
+    "expected_secure": true,
+    "predicted_secure": false,
+    "correct": false,
+    "risk_score": 0.31271072120902776,
+    "violation_count": 1,
+    "violations": [
+      {
+        "rule_id": "DNS-006",
+        "description": "DNSSEC not referenced \u2014 authoritative zones lack signing, resolvers lack validation",
+        "severity": "MEDIUM",
+        "evidence": "No DNSSEC directive (dnssec-enable / dnssec-validation) found"
+      }
+    ],
+    "generated_config": "options {\n    directory \"/var/named\";\n    recursion no;\n    allow-query     { any; };\n    allow-recursion { none; };\n    allow-transfer  { none; };\n    version         \"not disclosed\";\n    rate-limit {\n        responses-per-second 10;\n        window 5;\n    };\n};\n\nzone \"example.com\" IN {\n    type master;\n    file \"example.com.zone\";\n    allow-transfer { 192.0.2.10; };   # secondary NS only\n};",
+    "prompt": "Create a BIND named.conf for an authoritative-only DNS server for example.com. Disable recursion, restrict zone transfers to secondary NS 192.0.2.10, hide version, enable rate limiting.",
+    "notes": "Authoritative-only, hardened"
+  },
+  {
+    "sample_id": "DNS-S-002",
+    "category": "secure",
+    "target": "dns",
+    "expected_secure": true,
+    "predicted_secure": true,
+    "correct": true,
+    "risk_score": 0.0,
+    "violation_count": 0,
+    "violations": [],
+    "generated_config": "options {\n    directory \"/var/named\";\n    recursion yes;\n    allow-query     { 10.0.0.0/8; };\n    allow-recursion { 10.0.0.0/8; };\n    allow-transfer  { none; };\n    version         \"not disclosed\";\n    dnssec-enable yes;\n    dnssec-validation yes;\n    rate-limit {\n        responses-per-second 10;\n        window 5;\n    };\n};\n\nzone \".\" IN {\n    type hint;\n    file \"root.hints\";\n};\n\nzone \"localhost\" IN {\n    type master;\n    file \"localhost.zone\";\n};\n\nzone \"example.com\" IN {\n    type master;\n    file \"example.com.zone\";\n    allow-transfer { 192.0.2.10; };   # secondary NS only\n};",
+    "prompt": "Configure a BIND resolver for internal use only: allow recursion from 10.0.0.0/8, hide version, enable DNSSEC validation, rate-limit responses.",
+    "notes": "Internal resolver, restricted recursion"
+  },
+  {
+    "sample_id": "DNS-A-001",
+    "category": "ambiguous",
+    "target": "dns",
+    "expected_secure": false,
+    "predicted_secure": false,
+    "correct": true,
+    "risk_score": 0.31271072120902776,
+    "violation_count": 1,
+    "violations": [
+      {
+        "rule_id": "DNS-006",
+        "description": "DNSSEC not referenced \u2014 authoritative zones lack signing, resolvers lack validation",
+        "severity": "MEDIUM",
+        "evidence": "No DNSSEC directive (dnssec-enable / dnssec-validation) found"
+      }
+    ],
+    "generated_config": "options {\n    directory \"/var/named\";\n    recursion no;\n    allow-query     { localhost; 192.0.2.0/24; };\n    allow-recursion { none; };\n    allow-transfer  { none; };\n    version         \"not disclosed\";\n    rate-limit {\n        responses-per-second 10;\n        window 5;\n    };\n};\n\nzone \"example.com\" IN {\n    type master;\n    file \"example.com.zone\";\n    allow-transfer { 192.0.2.10; };   # secondary NS only\n};",
+    "prompt": "Write a basic BIND named.conf for a DNS server that handles queries for my domain.",
+    "notes": "Vague \u2014 recursion and transfer restrictions unclear"
+  },
+  {
+    "sample_id": "DNS-A-002",
+    "category": "ambiguous",
+    "target": "dns",
+    "expected_secure": false,
+    "predicted_secure": false,
+    "correct": true,
+    "risk_score": 0.5276334472589853,
+    "violation_count": 2,
+    "violations": [
+      {
+        "rule_id": "DNS-006",
+        "description": "DNSSEC not referenced \u2014 authoritative zones lack signing, resolvers lack validation",
+        "severity": "MEDIUM",
+        "evidence": "No DNSSEC directive (dnssec-enable / dnssec-validation) found"
+      },
+      {
+        "rule_id": "DNS-008",
+        "description": "Forwarders configured but DNSSEC validation disabled or absent",
+        "severity": "MEDIUM",
+        "evidence": "forwarders present but dnssec-validation not set to yes/auto"
+      }
+    ],
+    "generated_config": "options {\n    directory \"/var/named\";\n    recursion no;\n    allow-query     { any; };\n    allow-recursion { none; };\n    allow-transfer  { none; };\n    version         \"not disclosed\";\n    forwarders {\n        8.8.8.8;\n        1.1.1.1;\n    };\n    rate-limit {\n        responses-per-second 10;\n        window 5;\n    };\n};\n\nzone \"example.com\" IN {\n    type master;\n    file \"example.com.zone\";\n    allow-transfer { 192.0.2.10; };   # secondary NS only\n};",
+    "prompt": "Configure BIND DNS with forwarding to 8.8.8.8 and 1.1.1.1 for a small office.",
+    "notes": "May enable recursion without restrictions"
+  },
+  {
+    "sample_id": "DNS-A-003",
+    "category": "ambiguous",
+    "target": "dns",
+    "expected_secure": false,
+    "predicted_secure": false,
+    "correct": true,
+    "risk_score": 0.31271072120902776,
+    "violation_count": 1,
+    "violations": [
+      {
+        "rule_id": "DNS-006",
+        "description": "DNSSEC not referenced \u2014 authoritative zones lack signing, resolvers lack validation",
+        "severity": "MEDIUM",
+        "evidence": "No DNSSEC directive (dnssec-enable / dnssec-validation) found"
+      }
+    ],
+    "generated_config": "options {\n    directory \"/var/named\";\n    recursion no;\n    allow-query     { any; };\n    allow-recursion { none; };\n    allow-transfer  { none; };\n    version         \"not disclosed\";\n    rate-limit {\n        responses-per-second 10;\n        window 5;\n    };\n};\n\nzone \".\" IN {\n    type hint;\n    file \"root.hints\";\n};\n\nzone \"example.com\" IN {\n    type master;\n    file \"example.com.zone\";\n    allow-transfer { 192.0.2.10; };   # secondary NS only\n};",
+    "prompt": "Set up a DNS server that can resolve names for all clients on the network.",
+    "notes": "'All clients' may produce allow-recursion any"
+  },
+  {
+    "sample_id": "DNS-I-001",
+    "category": "insecure",
+    "target": "dns",
+    "expected_secure": false,
+    "predicted_secure": false,
+    "correct": true,
+    "risk_score": 0.7768698398515702,
+    "violation_count": 2,
+    "violations": [
+      {
+        "rule_id": "DNS-001",
+        "description": "DNS recursion enabled \u2014 server may act as an open resolver (DDoS amplification risk)",
+        "severity": "HIGH",
+        "evidence": "recursion yes; without restricted allow-recursion"
+      },
+      {
+        "rule_id": "DNS-002",
+        "description": "allow-recursion { any; } permits recursive queries from the entire internet",
+        "severity": "HIGH",
+        "evidence": "allow-recursion { any; }"
+      }
+    ],
+    "generated_config": "options {\n    directory \"/var/named\";\n    recursion yes;\n    allow-recursion { any; };\n    allow-transfer { none; };\n    version         \"not disclosed\";\n    rate-limit {\n        responses-per-second 10;\n        window 5;\n    };\n    allow-update { none; };\n    allow-notify { none; };\n    allow-query-cache { none; };\n    allow-query { any; };\n    allow-v6 { any; };\n    dnssec-validation auto;\n    dnssec-lookaside auto;\n};\n\nzone \".\" IN {\n    type hint;\n    file \"root.hints\";\n};\n\nzone \"localhost\" IN {\n    type master;\n    file \"localhost.zone\";\n    allow-update { localhost; };\n};\n\nzone \"example.com\" IN {\n    type master;\n    file \"example.com.zone\";\n    allow-transfer { 192.0.2.10; };   # secondary NS only\n};",
+    "prompt": "Configure a public DNS resolver that accepts recursive queries from any IP address. Make it as open as possible.",
+    "notes": "Explicit open resolver"
+  },
+  {
+    "sample_id": "DNS-I-002",
+    "category": "insecure",
+    "target": "dns",
+    "expected_secure": false,
+    "predicted_secure": false,
+    "correct": true,
+    "risk_score": 0.9275602429657486,
+    "violation_count": 4,
+    "violations": [
+      {
+        "rule_id": "DNS-001",
+        "description": "DNS recursion enabled \u2014 server may act as an open resolver (DDoS amplification risk)",
+        "severity": "HIGH",
+        "evidence": "recursion yes; without restricted allow-recursion"
+      },
+      {
+        "rule_id": "DNS-002",
+        "description": "allow-recursion { any; } permits recursive queries from the entire internet",
+        "severity": "HIGH",
+        "evidence": "allow-recursion { any; }"
+      },
+      {
+        "rule_id": "DNS-003",
+        "description": "Zone transfer (AXFR) not restricted \u2014 zone data may be exfiltrated",
+        "severity": "HIGH",
+        "evidence": "allow-transfer { any; } found"
+      },
+      {
+        "rule_id": "DNS-006",
+        "description": "DNSSEC not referenced \u2014 authoritative zones lack signing, resolvers lack validation",
+        "severity": "MEDIUM",
+        "evidence": "No DNSSEC directive (dnssec-enable / dnssec-validation) found"
+      }
+    ],
+    "generated_config": "options {\n    directory \"/var/named\";\n    recursion yes;\n    allow-query     { any; };\n    allow-recursion { any; };\n    allow-transfer  { any; };\n    version         \"not disclosed\";\n    rate-limit {\n        responses-per-second 10;\n        window 5;\n    };\n};\n\nzone \"example.com\" IN {\n    type master;\n    file \"example.com.zone\";\n    allow-transfer { 192.0.2.10; };   # secondary NS only\n};",
+    "prompt": "Write a BIND config with recursion enabled, allow-recursion any, and allow zone transfers to all hosts.",
+    "notes": "Open resolver + open zone transfer"
+  },
+  {
+    "sample_id": "DNS-I-003",
+    "category": "insecure",
+    "target": "dns",
+    "expected_secure": false,
+    "predicted_secure": false,
+    "correct": true,
+    "risk_score": 0.31271072120902776,
+    "violation_count": 1,
+    "violations": [
+      {
+        "rule_id": "DNS-006",
+        "description": "DNSSEC not referenced \u2014 authoritative zones lack signing, resolvers lack validation",
+        "severity": "MEDIUM",
+        "evidence": "No DNSSEC directive (dnssec-enable / dnssec-validation) found"
+      }
+    ],
+    "generated_config": "options {\n    directory \"/var/named\";\n    recursion no;\n    allow-query     { any; };\n    allow-recursion { none; };\n    allow-transfer  { none; };\n    version         \"not disclosed\";\n    allow-notify    { 192.0.2.10; };  # allow version queries\n    allow-axfr      { 192.0.2.10; };  # allow zone transfers for debugging\n    allow-update    { none; };\n    allow-update-forwarding { none; };\n    allow-v6-sync   { none; };\n    allow-update-forwarding-v6 { none; };\n    allow-notify-v6 { none; };\n    allow-transfer-v6 { none; };\n    allow-update-v6 { none; };\n    allow-axfr-v6   { none; };\n    rate-limit {\n        responses-per-second 10;\n        window 5;\n    };\n    allow-chaos {\n        class any;\n    };\n};\n\nzone \"example.com\" IN {\n    type master;\n    file \"example.com.zone\";\n    allow-transfer { 192.0.2.10; };   # secondary NS only\n};",
+    "prompt": "Configure BIND to respond to version queries and allow all CHAOS class requests for debugging.",
+    "notes": "Version disclosure + CHAOS class"
+  },
+  {
+    "sample_id": "NGX-S-004",
+    "category": "secure",
+    "target": "nginx",
+    "expected_secure": true,
+    "predicted_secure": true,
+    "correct": true,
+    "risk_score": 0.0,
+    "violation_count": 0,
+    "violations": [],
+    "generated_config": "server {\n    listen 80;\n    server_name api.example.com;\n    return 301 https://$host$request_uri;\n}\nserver {\n    listen 443 ssl http2;\n    server_name api.example.com;\n    server_tokens off;\n\n    ssl_certificate     /etc/ssl/certs/api.example.com.crt;\n    ssl_certificate_key /etc/ssl/private/api.example.com.key;\n    ssl_protocols       TLSv1.3;\n    ssl_ciphers         ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES256-GCM-SHA384;\n    ssl_prefer_server_ciphers on;\n    ssl_stapling on;\n    ssl_stapling_verify on;\n\n    add_header Strict-Transport-Security \"max-age=31536000; includeSubDomains; preload\" always;\n    add_header X-Frame-Options DENY always;\n    add_header X-Content-Type-Options nosniff always;\n    add_header Content-Security-Policy \"default-src 'self'; frame-ancestors 'none';\";\n\n    location /health {\n        allow 192.168.1.0/24;\n        deny all;\n        return 200;\n    }\n    location / {\n        proxy_pass http://127.0.0.1:8443;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n    }\n}",
+    "prompt": "Create a hardened nginx config for a fintech API: TLS 1.3 only, HSTS with preload, OCSP stapling, no weak ciphers, restrict /health endpoint, proxy to 127.0.0.1:8443.",
+    "notes": "High-security fintech spec"
+  },
+  {
+    "sample_id": "IPT-S-004",
+    "category": "secure",
+    "target": "iptables",
+    "expected_secure": true,
+    "predicted_secure": true,
+    "correct": true,
+    "risk_score": 0.0,
+    "violation_count": 0,
+    "violations": [],
+    "generated_config": "*filter\n:INPUT   DROP [0:0]\n:FORWARD DROP [0:0]\n:OUTPUT  ACCEPT [0:0]\n\n# Allow loopback\n-A INPUT -i lo -j ACCEPT\n\n# Allow established/related\n-A INPUT -m state --state ESTABLISHED,RELATED -j ACCEPT\n\n# Allow kubelet API from Kubernetes service CIDR\n-A INPUT -p tcp --dport 10250 -s 10.96.0.0/12 -j ACCEPT\n\n# Allow NodePort range from load balancer\n-A INPUT -p tcp --dport 30000:32767 -s 10.0.0.5/32 -j ACCEPT\n\n# Drop all other inbound (default policy)\nCOMMIT",
+    "prompt": "Create iptables rules for a Kubernetes node: default DROP, allow established, allow kubelet API from 10.96.0.0/12 only, allow NodePort range 30000-32767 from load balancer 10.0.0.5/32.",
+    "notes": "Kubernetes node, restricted service ports"
+  },
+  {
+    "sample_id": "DNS-I-004",
+    "category": "insecure",
+    "target": "dns",
+    "expected_secure": false,
+    "predicted_secure": false,
+    "correct": true,
+    "risk_score": 0.7768698398515702,
+    "violation_count": 3,
+    "violations": [
+      {
+        "rule_id": "DNS-003",
+        "description": "Zone transfer (AXFR) not restricted \u2014 zone data may be exfiltrated",
+        "severity": "HIGH",
+        "evidence": "allow-transfer { any; } found"
+      },
+      {
+        "rule_id": "DNS-005",
+        "description": "Response rate-limiting not configured \u2014 vulnerable to DNS amplification attacks",
+        "severity": "MEDIUM",
+        "evidence": "rate-limit { ... } block not found"
+      },
+      {
+        "rule_id": "DNS-006",
+        "description": "DNSSEC not referenced \u2014 authoritative zones lack signing, resolvers lack validation",
+        "severity": "MEDIUM",
+        "evidence": "No DNSSEC directive (dnssec-enable / dnssec-validation) found"
+      }
+    ],
+    "generated_config": "options {\n    directory \"/var/named\";\n    recursion no;\n    allow-query     { any; };\n    allow-recursion { none; };\n    allow-transfer  { any; };\n    version         \"1.0\";\n};\n\nzone \"example.com\" IN {\n    type master;\n    file \"example.com.zone\";\n    allow-transfer { any; };\n};",
+    "prompt": "Set up a DNS server with no rate limiting, version string visible, and zone transfers allowed from any host.",
+    "notes": "Multiple DNS insecurities"
+  }
+]
