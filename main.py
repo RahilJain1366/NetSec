@@ -387,7 +387,63 @@ def cmd_analyze_with_mitm(args):
     print(f"\n  Output saved → {out_path}\n")
     plog.flush()
 
+def cmd_evaluate_with_mitm(args):
+    """Evaluate dataset end-to-end: generation → validation → MITM analysis."""
+    from mitm import MITMNetworkAnalyzer, MITMReporter
 
+    run_id = setup_logging()
+    logger.info("═══ E2E evaluation with MITM [run_id=%s] ═══", run_id)
+
+    gen    = LLMConfigGenerator()
+    engine = ValidationEngine()
+    plog   = PipelineLogger(run_id, OUTPUT_DIR)
+
+    # Load dataset via Evaluator helper
+    ev = Evaluator(DATASET_PATH, gen, engine, plog, max_samples=args.max_samples)
+    samples = ev.load_dataset()
+
+    analyzer = MITMNetworkAnalyzer()
+    reporter = MITMReporter()
+
+    results = []
+    for i, s in enumerate(samples, 1):
+        logger.info("Sample %d/%d id=%s target=%s", i, len(samples), s.sample_id, s.target)
+        gen_result = gen.generate(s.prompt, s.target)
+        plog.log_generation(gen_result)
+
+        val = engine.validate(gen_result.raw_config, s.target)
+        plog.log_validation(val)
+
+        if args.mitm_mode == "demo":
+            net_res = analyzer.run_demo()
+        elif args.mitm_mode == "pcap":
+            if args.mitm_pcap_folder:
+                p = os.path.join(args.mitm_pcap_folder, f"{s.sample_id}.pcap")
+                net_res = analyzer.analyze_pcap(p) if os.path.exists(p) else analyzer.run_demo()
+            else:
+                net_res = analyzer.run_demo()
+        else:  # live
+            net_res = analyzer.capture_live(iface=args.interface, count=args.count, timeout=args.timeout)
+
+        mitm_report = reporter.generate(target=s.target.value, config_result=val, network_result=net_res)
+        plog.log_event("evaluate_mitm_sample", {"sample_id": s.sample_id})
+
+        results.append({
+            "sample_id": s.sample_id,
+            "target": s.target.value,
+            "prompt": s.prompt,
+            "generation": {"success": gen_result.success, "model": gen_result.model},
+            "validation": val.to_dict(),
+            "mitm_report": mitm_report.to_dict(),
+        })
+
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    out_path = os.path.join(OUTPUT_DIR, f"e2e_mitm_{run_id}.json")
+    with open(out_path, "w") as f:
+        json.dump(results, f, indent=2)
+    logger.info("Saved E2E MITM results → %s", out_path)
+    print(f"\n  Results saved → {out_path}")
+    plog.flush()
 
 # ── CLI wiring ────────────────────────────────────────────────────────────────
 
@@ -440,6 +496,16 @@ def main():
     p = sub.add_parser("analyze", help="Generate + validate + analyze MITM risks")
     p.add_argument("--target", required=True, choices=[t.value for t in ConfigTarget])
     p.add_argument("--prompt", required=True)
+
+    # evaluate-mitm
+    p = sub.add_parser("evaluate-mitm", help="Run full evaluation + MITM analysis")
+    p.add_argument("--max-samples", type=int, default=None)
+    p.add_argument("--mitm-mode", choices=["demo","pcap","live"], default="demo")
+    p.add_argument("--mitm-pcap-folder", help="Folder with pcaps named <sample_id>.pcap (used in pcap mode)")
+    p.add_argument("--interface", help="Interface for live capture")
+    p.add_argument("--count", type=int, default=500)
+    p.add_argument("--timeout", type=int, default=60)
+    
     args = parser.parse_args()
     
     dispatch = {
@@ -451,6 +517,7 @@ def main():
         "dashboard": cmd_dashboard,
         "rules":     cmd_rules,
         "mitm":      cmd_mitm,
+        "evaluate-mitm": cmd_evaluate_with_mitm,
     }
 
     dispatch[args.command](args)
