@@ -1,44 +1,6 @@
 """
-main_additions.py
-=================
-DROP-IN ADDITIONS for main.py
-──────────────────────────────
-Paste these two blocks into your existing main.py:
-
-  1. The function `cmd_evaluate_mitm()` — after the existing cmd_mitm() function
-  2. The argparse block inside main() — add the "evaluate-mitm" subparser
-  3. Add "evaluate-mitm": cmd_evaluate_mitm  to the dispatch dict
-
-Full command syntax:
-
-  # Dataset mode (UNSW-NB15 / CIC-IDS2017 CSV or parquet):
-  python main.py evaluate-mitm \
-      --mitm-mode dataset \
-      --traffic-dataset datasets/unsw_sample.csv \
-      --max-samples 50
-
-  # nids-datasets package (auto-download):
-  python main.py evaluate-mitm \
-      --mitm-mode nids-package \
-      --nids-dataset UNSW-NB15 \
-      --nids-subset Network-Flows \
-      --nids-files 1 2 \
-      --max-samples 200 \
-      --cache-csv datasets/unsw_flow_cache.csv
-
-  # Combined: config generation + dataset MITM analysis:
-  python main.py evaluate-mitm \
-      --mitm-mode dataset \
-      --traffic-dataset datasets/unsw_sample.csv \
-      --target nginx \
-      --prompt "Generate a secure nginx reverse proxy config" \
-      --max-samples 100
-
-  # PCAP mode (existing MITMNetworkAnalyzer):
-  python main.py evaluate-mitm \
-      --mitm-mode pcap \
-      --pcap-file capture.pcap
-
+Reference snippets for wiring evaluate-mitm into main.py.
+"""
   # Demo mode:
   python main.py evaluate-mitm --mitm-mode demo
 """

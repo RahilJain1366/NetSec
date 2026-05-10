@@ -1,17 +1,5 @@
 """
-generator/llm_generator.py
-──────────────────────────
-LLM-backed configuration generator.
-
-Design decisions
-────────────────
-• Low temperature (0.1) for near-deterministic output.
-• Structured system prompt primes the model as a "secure config generator".
-• Few-shot examples in the user turn show exactly what secure/insecure configs
-  look like so the model has calibration signal.
-• Output is extracted from a fenced code block; if absent we fall back to the
-  raw response so the validator can still flag it.
-• Retries on transient API errors (up to 3 attempts, exponential back-off).
+LLM-backed generator for secure network configurations.
 """
 
 from __future__ import annotations
@@ -36,7 +24,7 @@ from config import (
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# System prompt — role + hard constraints
+# System prompt
 # ---------------------------------------------------------------------------
 _SYSTEM_PROMPT = """You are a production-grade network security configuration generator.
 
@@ -66,7 +54,7 @@ SECURITY DEFAULTS
 """
 
 # ---------------------------------------------------------------------------
-# Few-shot examples per target
+# Few-shot examples
 # ---------------------------------------------------------------------------
 _FEW_SHOT: dict[ConfigTarget, str] = {
 
@@ -199,7 +187,7 @@ class LLMConfigGenerator:
         max_tokens: int = LLM_MAX_TOKENS,
         max_retries: int = 3,
     ) -> None:
-        self.client      = Groq()  # reads ANTHROPIC_API_KEY from env
+        self.client      = Groq()  # reads GROQ_API_KEY from env
         self.model       = model
         self.temperature = temperature
         self.max_tokens  = max_tokens
@@ -276,14 +264,7 @@ class LLMConfigGenerator:
     # ------------------------------------------------------------------
     @staticmethod
     def _extract_config(response: str, target: ConfigTarget) -> str:
-        """
-        Extract the configuration text from a fenced code block.
-
-        Tries (in order):
-        1. ```<target_name> … ``` block
-        2. Any ``` … ``` block
-        3. Raw response as fallback (lets the validator catch malformed output)
-        """
+        """Extract the configuration text from a fenced code block."""
         # Try target-specific fence first
         pattern_specific = re.compile(
             rf"```{re.escape(target.value)}\s*\n(.*?)```",
@@ -300,7 +281,7 @@ class LLMConfigGenerator:
             logger.warning("Used generic code fence fallback for target=%s", target.value)
             return m.group(1).strip()
 
-        # Last resort: raw text (may trigger validator to flag hallucinated configs)
+        # Fallback to raw text if no fenced block is present
         logger.warning(
             "No fenced block found for target=%s; using raw response", target.value
         )

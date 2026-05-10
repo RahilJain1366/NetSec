@@ -96,40 +96,9 @@ class NIDSDatasetLoader:
             ) from exc
 
         if files is None:
-            files = [1]
-
-        flavor = DatasetFlavor.UNSW_NB15 if "UNSW" in dataset.upper() else DatasetFlavor.CIC_IDS2017
-
-        if cache_csv and os.path.exists(cache_csv):
-            logger.info("Using cached dataset CSV: %s", cache_csv)
-            loader = cls(cache_csv, flavor=flavor)
-            loader.load(max_samples)
-            return loader
-
-        logger.info("Downloading %s / %s / files=%s via nids-datasets ...", dataset, subset, files)
-        data = NidsDataset(dataset=dataset, subset=[subset], files=files)
-        hf_dataset = data.read(dataset=dataset, subset=subset, files=files)
-        df = hf_dataset.to_pandas()
-        if max_samples:
-            df = df.head(max_samples)
-
-        if cache_csv:
-            os.makedirs(os.path.dirname(cache_csv) or ".", exist_ok=True)
-            df.to_csv(cache_csv, index=False)
-            logger.info("Cached dataset to %s", cache_csv)
-            loader = cls(cache_csv, flavor=flavor)
-        else:
-            loader = cls.__new__(cls)
-            loader.path = f"<nids-package:{dataset}/{subset}>"
-            loader.flavor = flavor
-            loader._df = df
-
-        loader._df = df
-        return loader
-
-    def _read_file(self, max_samples: Optional[int]) -> pd.DataFrame:
-        if self._df is not None:
-            df = self._df
+            """
+            Dataset loader for network-flow and PCAP sources used by the MITM pipeline.
+            """
         elif os.path.isdir(self.path):
             csv_paths = []
             for root, _, files in os.walk(self.path):

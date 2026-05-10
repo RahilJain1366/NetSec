@@ -1,24 +1,5 @@
 """
-validator/engine.py
-───────────────────
-Deterministic validation engine.
-
-Responsibilities
-────────────────
-1. Select the applicable rule set for the target config type.
-2. Run every rule against the raw config text.
-3. Aggregate violations and compute a probabilistic risk score.
-4. Return a structured ValidationResult.
-
-Risk Score Formula
-──────────────────
-  score = 1 - exp(-λ * weighted_severity)
-
-  where weighted_severity = Σ weight[sev] for each violation
-        weight: HIGH=3, MEDIUM=1.5, LOW=0.5
-        λ = 0.25  (tuned so 2 HIGH violations → ~0.78 risk)
-
-This gives a smooth 0→1 score that saturates toward 1 for many/severe violations.
+Deterministic validation engine with risk scoring.
 """
 
 from __future__ import annotations
@@ -40,27 +21,22 @@ from .rules_dns     import DNS_RULES
 
 logger = logging.getLogger(__name__)
 
-# Severity → numeric weight
+# Severity weights
 _SEVERITY_WEIGHT: dict[Severity, float] = {
     Severity.HIGH:   3.0,
     Severity.MEDIUM: 1.5,
     Severity.LOW:    0.5,
 }
 
-# Saturation parameter
+# Risk curve parameter
 _LAMBDA = 0.25
 
-# Minimum config length to be considered non-empty
+# Minimum acceptable config length
 _MIN_CONFIG_LEN = 20
 
 
 class ValidationEngine:
-    """
-    Runs modular security rules against a configuration text.
-
-    Rules are organized by ConfigTarget.  Custom rules can be injected
-    via the *extra_rules* parameter for extensibility.
-    """
+    """Runs target-specific security rules and computes a risk score."""
 
     _RULE_REGISTRY: dict[ConfigTarget, list[BaseRule]] = {
         ConfigTarget.NGINX:    NGINX_RULES,
@@ -86,7 +62,7 @@ class ValidationEngine:
             raw_config=config_text,
         )
 
-        # ── Sanity: empty / clearly hallucinated config ─────────────────
+        # ── Sanity: empty or truncated config ────────────────────────────
         if not config_text or len(config_text.strip()) < _MIN_CONFIG_LEN:
             result.parse_error = "Config text is empty or too short — likely a generation failure"
             result.is_secure   = False
@@ -133,11 +109,7 @@ class ValidationEngine:
     # ------------------------------------------------------------------
     @staticmethod
     def _compute_risk_score(violations: list[Violation]) -> float:
-        """
-        Map violations to a 0–1 risk score using an exponential saturation curve.
-
-        score = 1 − e^(−λ · Σ weight_i)
-        """
+        """Map violations to a 0–1 risk score."""
         if not violations:
             return 0.0
         total_weight = sum(_SEVERITY_WEIGHT[v.severity] for v in violations)

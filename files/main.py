@@ -1,17 +1,8 @@
 """
 main.py — CLI entry point for the network config security pipeline.
 
-Commands
-────────
-evaluate        — Run full evaluation over dataset
-generate        — Generate + validate a single config
-remediate       — Generate, validate, and auto-fix a config
-compare         — Compare two LLMs on the dataset
-analyze         — Generate config + validate + analyze MITM risks
-dashboard       — Launch the web UI
-rules           — List security rules for a target
-mitm            — Run MITM attack detection
-evaluate-mitm   — Real dataset → MITM analysis → LLM threat interpretation  ← NEW
+Commands include evaluation, generation, remediation, comparison, MITM
+analysis, dashboard, rules, and evaluate-mitm.
 """
 
 from __future__ import annotations
@@ -348,21 +339,10 @@ def cmd_analyze_with_mitm(args):
     plog.flush()
 
 
-# ── evaluate-mitm  (NEW) ──────────────────────────────────────────────────────
+# ── evaluate-mitm ────────────────────────────────────────────────────────────
 
 def cmd_evaluate_mitm(args):
-    """
-    End-to-end integrated evaluation:
-      Real Dataset → Loader → Flow Normalization → MITM Analyzer
-        → LLM Attack Evaluator → Integrated Security Report
-
-    Modes
-    -----
-    dataset    : CSV / parquet file (UNSW-NB15, CIC-IDS2017, generic)
-    nids-pkg   : auto-download via `pip install nids-datasets`
-    pcap       : PCAP file (delegates to existing MITMNetworkAnalyzer)
-    demo       : in-memory simulation (existing MITMNetworkAnalyzer)
-    """
+    """End-to-end dataset MITM analysis and report generation."""
     run_id = setup_logging()
 
     from datasets.loader        import NIDSDatasetLoader
@@ -524,7 +504,7 @@ def cmd_evaluate_mitm(args):
 
     if report.llm_summary:
         print("\n  ─── LLM Threat Summary ───")
-        # wrap long lines
+        # Format the threat summary for display
         words, line = report.llm_summary.split(), ""
         for w in words:
             if len(line) + len(w) > 70:
