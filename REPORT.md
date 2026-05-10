@@ -5,11 +5,11 @@
 
 ## 1. Executive Summary
 
-This document describes the design and implementation of a production-grade prototype that combines a Large Language Model (LLM) generation layer with a deterministic rule-based validation engine to automate and audit network security configurations.
+This document summarizes the current netconfig_llm_v3 pipeline: Groq-backed config generation, deterministic rule-based validation, remediation, model comparison, MITM analysis, and a Flask dashboard.
 
-The system accepts natural-language security policies, generates syntactically valid configuration artifacts (nginx, iptables, DNS), and validates them against formally defined security invariants — returning structured violation reports with severity levels, evidence strings, and probabilistic risk scores.
+The system accepts natural-language security prompts, generates configurations for nginx, iptables, and DNS, and validates them against explicit security rules. It also supports dataset-driven MITM analysis, adversarial prompt evaluation, and integrated reporting.
 
-**Empirical validation (demo run): 6/6 hand-crafted examples correctly classified. All expected violations detected, zero false positives on secure configs.**
+**Demo validation:** bundled examples are classified by the validator with severity-tagged violations and risk scores.
 
 ---
 
@@ -24,7 +24,7 @@ The system accepts natural-language security policies, generates syntactically v
 │         ▼                                                       │
 │  ┌──────────────────┐    System Prompt + Few-Shot Examples      │
 │  │  LLM Generator   │◄──────────────────────────────────────── │
-│  │  (Anthropic API) │                                           │
+│  │  (Groq API)      │                                           │
 │  └────────┬─────────┘                                           │
 │           │  Raw Config Text (fenced code block)                │
 │           ▼                                                     │
@@ -65,21 +65,23 @@ The system accepts natural-language security policies, generates syntactically v
 | File | Responsibility |
 |------|---------------|
 | `config.py` | Global constants, dataclasses, enums |
-| `generator/llm_generator.py` | Anthropic API wrapper, prompt engineering, retry logic |
+| `generator/llm_generator.py` | Groq API wrapper, prompt engineering, retry logic |
 | `validator/rules_base.py` | Abstract `BaseRule` interface |
 | `validator/rules_nginx.py` | 9 nginx-specific security rules |
 | `validator/rules_iptables.py` | 9 iptables-specific security rules |
 | `validator/rules_dns.py` | 7 DNS (BIND) security rules |
 | `validator/engine.py` | Rule orchestration, risk scoring |
-| `evaluator/evaluator.py` | Dataset evaluation loop, metrics computation |
-| `mitm/network_analyzer.py` | Live/offline MITM attack detection (ARP spoofing, SSL stripping, TLS downgrade, DNS spoofing) |
-| `mitm/config_rules.py` | Maps network behaviors to config vulnerabilities |
-| `mitm/reporter.py` | MITM detection report generation |
+| `evaluator/evaluator.py` | Dataset evaluation loop and metrics |
+| `remediator/remediator.py` | Iterative remediation loop for insecure configs |
+| `comparator/comparator.py` | Model-vs-model evaluation on the same dataset |
+| `mitm/` | Network and dataset MITM analysis plus reporting |
+| `datasets/` | Dataset loading, LLM threat interpretation, integrated report builder |
 | `observability.py` | Structured JSON logging, PipelineLogger |
 | `main.py` | CLI entry point |
 | `demo.py` | Offline demonstration (no API key) |
-| `adversarial_eval.py` | Security persona probing (tests LLM bypass under social engineering) |
-| `tests/test_validator.py` | 29 unit tests (100% pass) |
+| `adversarial_eval.py` | Security persona probing |
+| `dashboard/app.py` | Flask dashboard for runs, samples, remediation, comparison, and adversarial views |
+| `tests/test_validator.py` | Validator unit tests |
 | `dataset.json` | 30-sample synthetic evaluation dataset |
 | `adversarial_dataset.json` | Adversarial prompts for persona testing |
 
@@ -89,23 +91,23 @@ The system accepts natural-language security policies, generates syntactically v
 
 ### 3.1 LLM Generation Layer
 
-**Model**: `claude-sonnet-4-6` (production quality, reasonable cost).
+**Model**: `llama-3.1-8b-instant` via Groq.
 
 **Temperature = 0.1** — Deliberately near-deterministic. Network configurations are not creative text; we want minimal variance between runs of the same prompt. Higher temperature produces syntactically correct but randomly varying configs that are harder to audit.
 
 **System prompt design** follows three principles:
-1. **Role priming** — "You are a production-grade network security configuration generator" establishes persona and context window framing.
-2. **Hard constraints** — Explicit numbered rules that fire before any generation (no prose, fenced code block output, TLS required, etc.).
-3. **Security defaults** — Per-target sensible defaults so the model doesn't have to infer them.
+1. **Role priming** — establishes the model as a secure config generator.
+2. **Hard constraints** — enforces raw config output, fenced code blocks, and least-privilege defaults.
+3. **Security defaults** — gives each target a safe baseline.
 
 **Few-shot examples** are injected in the user turn (not system prompt) to give the model calibration on what secure vs insecure looks like. Critically, insecure examples are labelled "DO NOT produce this" — this avoids the model treating them as positive examples.
 
-**Fence extraction** uses a priority chain:
-1. ` ```<target_name>` ` block (most specific)
-2. Any ` ``` ` block (fallback)
-3. Raw response (last resort — lets validator flag hallucinated configs)
+**Fence extraction** uses a simple fallback chain:
+1. Target-specific fenced block
+2. Generic fenced block
+3. Raw response if no fence is found
 
-**Retry logic** with exponential back-off handles transient rate limits. Up to 3 attempts.
+**Retry logic** uses exponential back-off for transient API failures.
 
 ### 3.2 Validation Engine Design
 
@@ -232,7 +234,7 @@ This gives a binary prediction from the probabilistic engine for metric computat
 
 ## 5. Evaluation Results (Demo Run)
 
-### 5.1 Demo Run (6 hand-crafted samples)
+### 5.1 Demo Run (bundled examples)
 
 | Example | Target | Expected | Predicted | Correct | Risk Score |
 |---------|--------|----------|-----------|---------|-----------|
@@ -243,7 +245,7 @@ This gives a binary prediction from the probabilistic engine for metric computat
 | Secure DNS (authoritative-only) | dns | Secure | Secure | ✓ | 0.000 |
 | Insecure DNS (open resolver) | dns | Insecure | Insecure | ✓ | 0.956 |
 
-**Accuracy: 6/6 (100%)** on hand-crafted examples.
+**Accuracy: 6/6 (100%)** on the bundled hand-crafted examples.
 
 ### 5.2 Violation Counts by Config Type
 
@@ -283,7 +285,7 @@ Risk scores for insecure configs cluster 0.95–0.99, clearly separable from 0.0
 - **Multi-run averaging**: Generate each sample 3× and report the worst-case violation set
 
 ### Medium-term
-- **Model comparison**: Benchmark GPT-4o vs Claude vs Llama-3 on the same dataset. Hypothesis: instruction-tuned models with code training perform better on config generation
+- **Model comparison**: Benchmark several instruction-tuned models on the same dataset. Hypothesis: code-oriented models perform better on config generation
 - **Probabilistic scoring calibration**: Fit the `λ` parameter using calibration data from a labeled corpus
 - **LLM-assisted rule generation**: Use the LLM to propose new security rules given CVE descriptions, then have a human review before adding to the engine
 
@@ -298,11 +300,16 @@ Risk scores for insecure configs cluster 0.95–0.99, clearly separable from 0.0
 ## 8. Dependencies
 
 ```
-anthropic>=0.25.0   # LLM API client
+groq>=0.9.0         # LLM API client
+flask>=3.0.0        # Dashboard
+python-dotenv>=1.0.0
 pytest>=8.0.0       # Testing framework
+pandas>=2.2.0
+pyarrow>=16.0.0
+nids-datasets>=0.1.0
 ```
 
-No other external dependencies. The codebase is pure Python 3.10+ standard library + these two packages.
+The codebase is Python 3.10+ with a small set of runtime dependencies for generation, evaluation, dashboarding, and dataset loading.
 
 ---
 
@@ -310,7 +317,7 @@ No other external dependencies. The codebase is pure Python 3.10+ standard libra
 
 ```bash
 # Install dependencies
-pip install anthropic pytest
+pip install -r requirements.txt
 
 # Run unit tests (no API key needed)
 python -m pytest tests/ -v
@@ -319,12 +326,18 @@ python -m pytest tests/ -v
 python demo.py
 
 # Generate + validate a single config (API key required)
-export ANTHROPIC_API_KEY=sk-ant-...
+export GROQ_API_KEY=...
 python main.py generate --target nginx --prompt "Serve api.example.com over HTTPS with TLS 1.3"
 
 # Run full evaluation (API key required)
 python main.py evaluate --max-samples 10
 
+# Run integrated dataset MITM analysis
+python main.py evaluate-mitm --mitm-mode demo --max-samples 10
+
 # List all rules for a target
 python main.py rules --target iptables
+
+# Launch the dashboard
+python main.py dashboard --port 5000
 ```
