@@ -16,5 +16,6 @@ checkpoints/
 *.pkl
 *.joblib
 
+logs/
 outputs/
 datasets/data/
