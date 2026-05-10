@@ -1,0 +1,11 @@
+# ── Existing requirements (unchanged) ────────────────────────────────────────
+groq
+python-dotenv
+flask
+scapy
+
+# ── New: real NIDS dataset support ────────────────────────────────────────────
+nids-datasets          # UNSW-NB15 + CIC-IDS2017 via HuggingFace
+pyarrow                # parquet read/write
+pandas
+datasets               # HuggingFace datasets (required by nids-datasets)

@@ -389,7 +389,7 @@ def cmd_analyze_with_mitm(args):
 
 def cmd_evaluate_with_mitm(args):
     """Evaluate dataset end-to-end: generation → validation → MITM analysis."""
-    from mitm import MITMNetworkAnalyzer, MITMReporter
+    from mitm import MITMNetworkAnalyzer, DatasetMITMAnalyzer, MITMReporter
 
     run_id = setup_logging()
     logger.info("═══ E2E evaluation with MITM [run_id=%s] ═══", run_id)
@@ -398,12 +398,38 @@ def cmd_evaluate_with_mitm(args):
     engine = ValidationEngine()
     plog   = PipelineLogger(run_id, OUTPUT_DIR)
 
+    mitm_mode = "dataset" if args.mitm_mode == "traffic-dataset" else args.mitm_mode
+
     # Load dataset via Evaluator helper
     ev = Evaluator(DATASET_PATH, gen, engine, plog, max_samples=args.max_samples)
     samples = ev.load_dataset()
 
-    analyzer = MITMNetworkAnalyzer()
+    analyzer = DatasetMITMAnalyzer() if mitm_mode == "dataset" else MITMNetworkAnalyzer()
     reporter = MITMReporter()
+
+    dataset_net_res = None
+    if mitm_mode == "dataset":
+        if not args.traffic_dataset:
+            print("[ERROR] --traffic-dataset required for dataset mode")
+            return
+        if not os.path.exists(args.traffic_dataset):
+            print(f"[ERROR] Traffic dataset not found: {args.traffic_dataset}")
+            return
+        try:
+            dataset_net_res = analyzer.analyze_dataset_file(
+                args.traffic_dataset,
+                max_traffic_rows=args.max_traffic_rows,
+            )
+            logger.info(
+                "Loaded dataset traffic analysis once for %s | flows=%d indicators=%d risk=%.3f",
+                args.traffic_dataset,
+                getattr(dataset_net_res, "total_flows", 0),
+                len(getattr(dataset_net_res, "indicators", [])),
+                getattr(dataset_net_res, "risk_score", 0.0),
+            )
+        except Exception as exc:
+            print(f"[ERROR] Failed to analyze traffic dataset: {exc}")
+            return
 
     results = []
     for i, s in enumerate(samples, 1):
@@ -414,14 +440,16 @@ def cmd_evaluate_with_mitm(args):
         val = engine.validate(gen_result.raw_config, s.target)
         plog.log_validation(val)
 
-        if args.mitm_mode == "demo":
+        if mitm_mode == "demo":
             net_res = analyzer.run_demo()
-        elif args.mitm_mode == "pcap":
+        elif mitm_mode == "pcap":
             if args.mitm_pcap_folder:
                 p = os.path.join(args.mitm_pcap_folder, f"{s.sample_id}.pcap")
                 net_res = analyzer.analyze_pcap(p) if os.path.exists(p) else analyzer.run_demo()
             else:
                 net_res = analyzer.run_demo()
+        elif mitm_mode == "dataset":
+            net_res = dataset_net_res
         else:  # live
             net_res = analyzer.capture_live(iface=args.interface, count=args.count, timeout=args.timeout)
 
@@ -500,7 +528,9 @@ def main():
     # evaluate-mitm
     p = sub.add_parser("evaluate-mitm", help="Run full evaluation + MITM analysis")
     p.add_argument("--max-samples", type=int, default=None)
-    p.add_argument("--mitm-mode", choices=["demo","pcap","live"], default="demo")
+    p.add_argument("--mitm-mode", choices=["demo","pcap","live","dataset","traffic-dataset"], default="demo")
+    p.add_argument("--traffic-dataset", help="Path to traffic dataset (CSV/PCAP/flows) — used by dataset mode")
+    p.add_argument("--max-traffic-rows", type=int, default=None, help="Cap the number of traffic rows loaded from --traffic-dataset")
     p.add_argument("--mitm-pcap-folder", help="Folder with pcaps named <sample_id>.pcap (used in pcap mode)")
     p.add_argument("--interface", help="Interface for live capture")
     p.add_argument("--count", type=int, default=500)

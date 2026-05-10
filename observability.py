@@ -162,6 +162,16 @@ class PipelineLogger:
         }
         self._records.append(event)
 
+    def log_event(self, event_name: str, payload: Optional[dict] = None) -> None:
+        event = {
+            "event": event_name,
+            "ts": _now(),
+            "run_id": self.run_id,
+        }
+        if payload:
+            event.update(payload)
+        self._records.append(event)
+
     # ── Flush ─────────────────────────────────────────────────────────────
     def flush(self) -> str:
         """Write all records to a structured JSON log file. Returns the path."""
@@ -174,3 +184,4 @@ class PipelineLogger:
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
