@@ -175,16 +175,69 @@ python adversarial_eval.py --max-samples 20 --delay 2
 ### 11. Launch dashboard
 
 ```bash
-python main.py dashboard --port 5000
+python main.py dashboard --port 5001
+```
+
+From the repository root, you can also use the launcher shim:
+
+```bash
+python main.py dashboard --port 5001
 ```
 
 Open in browser:
 
 ```text
-http://localhost:5000
+http://localhost:5001
 ```
 
-### 12. Run tests
+### 12. Docker (PostgreSQL + dashboard)
+
+Run from `code/netconfig_llm_v3`:
+
+```bash
+docker compose up -d --build
+docker compose ps
+```
+
+Set secrets in `.env` in the same folder as `docker-compose.yml`:
+
+```env
+GROQ_API_KEY=your_groq_api_key_here
+NETCONFIG_SECRET_KEY=your_long_random_secret
+```
+
+Generate a strong secret key:
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(64))"
+```
+
+The dashboard is exposed at:
+
+```text
+http://localhost:5001
+```
+
+### 13. Smoke test
+
+Use the included script to perform a full health check + sample run verification:
+
+```bash
+chmod +x smoketest.sh
+./smoketest.sh
+```
+
+### 14. Production hosting
+
+For deployment, run the Flask app behind Gunicorn from `code/netconfig_llm_v3`:
+
+```bash
+gunicorn -w 2 -b 0.0.0.0:5001 wsgi:app
+```
+
+Set `NETCONFIG_SECRET_KEY` in production and place the app behind a reverse proxy or PaaS.
+
+### 15. Run tests
 
 ```bash
 pytest -q

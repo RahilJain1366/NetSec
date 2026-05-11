@@ -17,7 +17,7 @@ Run
 ───
   cd netconfig_llm
   python dashboard/app.py
-  open http://localhost:5000
+  open http://localhost:5001
 """
 
 from __future__ import annotations
@@ -36,7 +36,8 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = "netsec-dashboard"
+app.secret_key = os.environ.get("NETCONFIG_SECRET_KEY", "netsec-dashboard")
+app.config["JSON_SORT_KEYS"] = False
 
 # ── Template helpers ──────────────────────────────────────────────────────────
 
@@ -55,26 +56,42 @@ BASE_HTML = """
       --blue: #3b82f6; --orange: #f97316;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; min-height: 100vh; }
+    body {
+      background:
+        radial-gradient(circle at top left, rgba(99,102,241,0.18), transparent 30%),
+        radial-gradient(circle at top right, rgba(16,185,129,0.10), transparent 24%),
+        var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', sans-serif;
+      min-height: 100vh;
+    }
     a { color: var(--accent); text-decoration: none; }
     a:hover { text-decoration: underline; }
 
     nav {
-      background: var(--surface); border-bottom: 1px solid var(--border);
-      padding: 0 2rem; display: flex; align-items: center; gap: 2rem; height: 56px;
+      position: sticky; top: 0; z-index: 10;
+      background: rgba(26,29,39,0.92); backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem; display: flex; align-items: center; gap: 2rem; height: 64px;
     }
-    nav .brand { font-weight: 700; font-size: 1.1rem; color: var(--text); }
+    nav .brand { font-weight: 800; font-size: 1.05rem; color: var(--text); letter-spacing: 0.01em; }
     nav a { color: var(--muted); font-size: 0.9rem; }
     nav a:hover { color: var(--text); text-decoration: none; }
 
-    .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+    .container { max-width: 1240px; margin: 0 auto; padding: 2rem; }
     h1 { font-size: 1.6rem; margin-bottom: 1.5rem; }
     h2 { font-size: 1.2rem; margin-bottom: 1rem; color: var(--muted); }
 
     .card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;
+      background: linear-gradient(180deg, rgba(26,29,39,0.98), rgba(20,23,32,0.98));
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 16px 50px rgba(0,0,0,0.24);
+      transition: transform 0.18s ease, border-color 0.18s ease;
     }
+    .card:hover { transform: translateY(-1px); border-color: rgba(99,102,241,0.45); }
     .card h3 { font-size: 1rem; margin-bottom: 1rem; }
 
     .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 1rem; margin-bottom: 1.5rem; }
@@ -125,7 +142,7 @@ BASE_HTML = """
     label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 0.4rem; }
     select, textarea {
       width: 100%; background: var(--bg); border: 1px solid var(--border);
-      color: var(--text); border-radius: 6px; padding: 0.6rem 0.8rem; font-size: 0.9rem;
+      color: var(--text); border-radius: 8px; padding: 0.7rem 0.9rem; font-size: 0.9rem;
     }
     textarea { min-height: 100px; resize: vertical; font-family: inherit; }
     select:focus, textarea:focus { outline: none; border-color: var(--accent); }
@@ -134,7 +151,7 @@ BASE_HTML = """
       color: white; border: none; border-radius: 6px; font-size: 0.9rem;
       cursor: pointer; font-weight: 600;
     }
-    .btn:hover { opacity: 0.85; }
+    .btn:hover { opacity: 0.92; transform: translateY(-1px); }
     .btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .btn-outline { background: transparent; border: 1px solid var(--accent); color: var(--accent); }
 
@@ -158,6 +175,8 @@ BASE_HTML = """
     .alert.info    { background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.3); color: #a5b4fc; }
 
     .empty { text-align: center; color: var(--muted); padding: 3rem; font-size: 0.9rem; }
+    .page-title { margin-bottom: 0.5rem; }
+    .page-subtitle { color: var(--muted); margin-bottom: 1.5rem; }
   </style>
 </head>
 <body>
@@ -183,7 +202,7 @@ BASE_HTML = """
       }
     });
   </script>
-  {% block scripts %}{% endblock %}
+  {{ extra_scripts|default('')|safe }}
 </body>
 </html>
 """
@@ -374,8 +393,8 @@ SAMPLE_HTML = BASE_HTML.replace("{% block content %}{% endblock %}", """
 
 REMEDIATE_HTML = BASE_HTML.replace("{% block content %}{% endblock %}", """
 {% block content %}
-<h1>Auto-Remediation</h1>
-<p style="color:var(--muted);margin-bottom:1.5rem">Enter a natural language policy. The system will generate a config, validate it, and automatically fix any violations.</p>
+<h1 class="page-title">Auto-Remediation</h1>
+<p class="page-subtitle">Enter a natural language policy. The system will generate a config, validate it, and automatically fix any violations.</p>
 
 <div class="card">
   <div class="form-group">
@@ -421,7 +440,9 @@ REMEDIATE_HTML = BASE_HTML.replace("{% block content %}{% endblock %}", """
   </div>
 </div>
 {% endblock %}
-{% block scripts %}
+""")
+
+REMEDIATE_SCRIPT = """
 <script>
 async function runRemediation() {
   const btn = document.querySelector('.btn');
@@ -499,8 +520,7 @@ function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 </script>
-{% endblock %}
-""")
+"""
 
 # ── Compare page ──────────────────────────────────────────────────────────────
 
@@ -676,7 +696,7 @@ def sample_detail(run_id, sample_id):
 
 @app.route("/remediate")
 def remediate_page():
-    return render_template_string(REMEDIATE_HTML)
+  return render_template_string(REMEDIATE_HTML, extra_scripts=REMEDIATE_SCRIPT)
 
 
 @app.route("/api/remediate", methods=["POST"])
@@ -721,6 +741,11 @@ def compare_page():
 @app.route("/api/runs")
 def api_runs():
     return jsonify(_load_runs())
+
+
+@app.route("/favicon.ico")
+def favicon():
+  return ("", 204)
 
 
 
@@ -863,5 +888,5 @@ def adversarial_page():
 
 if __name__ == "__main__":
     print("\n  🔐 NetConfig Security Dashboard")
-    print("  Open → http://localhost:5000\n")
-    app.run(debug=True, port=5000)
+    print("  Open → http://localhost:5001\n")
+    app.run(debug=True, port=5001)

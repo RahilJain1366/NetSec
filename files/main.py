@@ -576,7 +576,7 @@ def main():
 
     # dashboard
     p = sub.add_parser("dashboard", help="Launch the web UI")
-    p.add_argument("--port", type=int, default=5000)
+    p.add_argument("--port", type=int, default=5001)
     p.add_argument("--debug", action="store_true")
 
     # rules
